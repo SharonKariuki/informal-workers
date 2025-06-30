@@ -2,9 +2,9 @@
 
 const FileUpload = ({ label, side, onChange, isHovered, onMouseEnter, onMouseLeave, error, accept }) => {
   return (
-    <div>
+    <div className="mb-4">
       <label
-        className={`block border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all duration-300 ${
+        className={`block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-300 ${
           error ? 'border-red-400 bg-red-50' : isHovered ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-gray-50'
         }`}
         onMouseEnter={onMouseEnter}
@@ -20,7 +20,7 @@ const FileUpload = ({ label, side, onChange, isHovered, onMouseEnter, onMouseLea
         <p className={`font-medium mb-1 transition-colors duration-300 ${
           error ? 'text-red-600' : isHovered ? 'text-blue-600' : 'text-gray-700'
         }`}>{label}</p>
-        <p className="text-xs text-gray-500">JPG, PNG, PDF (Max: 5MB)</p>
+        <p className="text-xs text-gray-500 mb-2">JPG, PNG, PDF (Max: 5MB)</p>
         <input
           type="file"
           name={side}

@@ -4,20 +4,21 @@ const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const { promisify } = require('util');
 
-// Helper to sign JWT
+// Generate JWT
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN
   });
 
-// @desc    Register user
-// @route   POST /api/auth/signup
-// @access  Public
+/**
+ * @desc    Register user and send email verification
+ * @route   POST /api/auth/signup
+ * @access  Public
+ */
 exports.signup = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
-    // 1) Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -26,48 +27,72 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // 2) Create user
     const newUser = await User.create({ firstName, lastName, email, password });
 
-    // 3) Create email verification token
-    const verificationToken = newUser.createVerificationToken();
+    const rawToken = newUser.createVerificationToken();
     await newUser.save({ validateBeforeSave: false });
 
-    // 4) Build verification URL
-    const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
-    const message = `Please verify your email by clicking this link:\n\n${verificationUrl}\n\nIf you did not sign up, ignore this email.`;
+    const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${rawToken}`;
 
-    // 5) Send email
+    const html = `
+      <div style="font-family: Arial, sans-serif; background-color: #f9fafb; padding: 20px; color: #111;">
+        <div style="max-width: 600px; margin: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden;">
+          <div style="background: linear-gradient(to right, #6366f1, #3b82f6); padding: 20px;">
+            <h2 style="color: white; margin: 0;">Welcome to KaziLink, ${newUser.firstName}!</h2>
+          </div>
+          <div style="padding: 30px;">
+            <p>Thank you for registering at <strong>KaziLink</strong>. Please verify your email to activate your account.</p>
+            <a href="${verificationUrl}" style="
+              display: inline-block;
+              background-color: #3b82f6;
+              color: white;
+              text-decoration: none;
+              padding: 12px 24px;
+              border-radius: 6px;
+              font-weight: bold;
+              margin: 20px 0;
+            ">
+              Verify Email
+            </a>
+            <p>This link will expire in 24 hours.</p>
+            <p>If you didn’t request this, you can safely ignore this email.</p>
+          </div>
+          <div style="background: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
+            &copy; ${new Date().getFullYear()} KaziLink. All rights reserved.
+          </div>
+        </div>
+      </div>
+    `;
+
     await sendEmail({
       email: newUser.email,
-      subject: 'Verify your email - KaziLink',
-      message,
-      html: `
-        <h2>Welcome to KaziLink, ${newUser.firstName}!</h2>
-        <p>Click the button below to verify your email address:</p>
-        <a href="${verificationUrl}" style="padding: 10px 20px; background: #3b82f6; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-        <p>This link expires in 24 hours.</p>
-        <p>If you didn't request this, ignore this email.</p>
-      `
+      subject: 'Verify Your Email - KaziLink',
+      message: '', // plain text (optional)
+      html
     });
 
     res.status(201).json({
       status: 'success',
-      message: 'Verification email sent!'
+      message: 'Verification email sent! Please check your inbox.'
     });
 
   } catch (err) {
     console.error('Signup error:', err);
-    res.status(400).json({ status: 'fail', message: err.message });
+    res.status(500).json({ status: 'fail', message: 'Something went wrong. Please try again.' });
   }
 };
 
-// @desc    Verify email
-// @route   GET /api/auth/verify-email/:token
-// @access  Public
+/**
+ * @desc    Verify email
+ * @route   GET /api/auth/verify-email/:token
+ * @access  Public
+ */
 exports.verifyEmail = async (req, res) => {
   try {
-    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
 
     const user = await User.findOne({
       verificationToken: hashedToken,
@@ -77,7 +102,7 @@ exports.verifyEmail = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Token is invalid or has expired.'
+        message: 'Invalid or expired token.'
       });
     }
 
@@ -88,20 +113,42 @@ exports.verifyEmail = async (req, res) => {
 
     const token = signToken(user._id);
 
-    res.status(200).json({
-      status: 'success',
-      token,
-      data: { user }
-    });
+    res.redirect(`${process.env.CLIENT_URL}/role-selection?token=${token}`);
+
   } catch (err) {
-    console.error('Email verification error:', err);
-    res.status(400).json({ status: 'fail', message: err.message });
+    console.error('Verify email error:', err);
+    res.status(500).json({ status: 'fail', message: 'Email verification failed.' });
   }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/signin
-// @access  Public
+// controllers/authController.js
+
+exports.setRole = async (req, res) => {
+  try {
+    const { userId, role } = req.body;
+
+    if (!['employer', 'worker'].includes(role)) {
+      return res.status(400).json({ status: 'fail', message: 'Invalid role value' });
+    }
+
+    const user = await User.findByIdAndUpdate(userId, { role }, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ status: 'fail', message: 'User not found' });
+    }
+
+    res.status(200).json({ status: 'success', data: { user } });
+  } catch (error) {
+    console.error('Set role error:', error);
+    res.status(500).json({ status: 'error', message: 'Something went wrong' });
+  }
+};
+
+/**
+ * @desc    Sign in user
+ * @route   POST /api/auth/signin
+ * @access  Public
+ */
 exports.signin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -122,9 +169,9 @@ exports.signin = async (req, res) => {
     }
 
     if (!user.isVerified) {
-      return res.status(401).json({
+      return res.status(403).json({
         status: 'fail',
-        message: 'Please verify your email first. Check your inbox.'
+        message: 'Please verify your email before logging in.'
       });
     }
 
@@ -137,46 +184,52 @@ exports.signin = async (req, res) => {
     });
   } catch (err) {
     console.error('Signin error:', err);
-    res.status(400).json({ status: 'fail', message: err.message });
+    res.status(500).json({ status: 'fail', message: 'Login failed. Please try again.' });
   }
 };
 
-// @desc    Protect route middleware
+/**
+ * @desc    Middleware to protect routes
+ */
 exports.protect = async (req, res, next) => {
   try {
     let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
       token = req.headers.authorization.split(' ')[1];
     }
 
     if (!token) {
       return res.status(401).json({
         status: 'fail',
-        message: 'Not logged in. Please login to access this route.'
+        message: 'Not authorized. Please login first.'
       });
     }
 
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-    const currentUser = await User.findById(decoded.id);
-    if (!currentUser) {
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
       return res.status(401).json({
         status: 'fail',
-        message: 'The user belonging to this token no longer exists.'
+        message: 'User no longer exists.'
       });
     }
 
-    // Optionally handle password change check
-    if (currentUser.changedPasswordAfter && currentUser.changedPasswordAfter(decoded.iat)) {
+    // Optional: Check if password was changed after token was issued
+    if (user.changedPasswordAfter && user.changedPasswordAfter(decoded.iat)) {
       return res.status(401).json({
         status: 'fail',
-        message: 'Password was changed recently. Please login again.'
+        message: 'Password recently changed. Please login again.'
       });
     }
 
-    req.user = currentUser;
+    req.user = user;
     next();
   } catch (err) {
-    console.error('Protect route error:', err);
+    console.error('Protect middleware error:', err);
     res.status(401).json({ status: 'fail', message: 'Unauthorized access.' });
   }
 };

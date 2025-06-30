@@ -70,18 +70,40 @@ export default function WorkerRegistrationForm() {
   const removeSkill = (skill) => {
     setSkills(skills.filter((s) => s !== skill));
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!validate()) return;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validate()) {
-      setIsSubmitting(true);
-      console.log('Form submitted:', { ...formData, skills });
-      setTimeout(() => {
-        setIsSubmitting(false);
-        alert('Registration successful!');
-      }, 1500);
+  setIsSubmitting(true);
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || !user._id) throw new Error('User not found. Please log in again.');
+
+    const data = new FormData();
+    for (const key in formData) {
+      if (formData[key]) data.append(key, formData[key]);
     }
-  };
+    data.append('skills', JSON.stringify(skills));
+    data.append('role', 'worker');
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/workers/register?userId=${user._id}`, {
+      method: 'POST',
+      body: data,
+    });
+
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.message || 'Registration failed');
+
+    alert('🎉 Worker registered successfully!');
+    router.push('/profile/pending');
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <BaseFormLayout
