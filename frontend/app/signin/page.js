@@ -19,7 +19,7 @@ export default function SignInPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch('http://localhost:5000/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -30,7 +30,14 @@ export default function SignInPage() {
       if (res.ok) {
         localStorage.setItem('token', data.token);
         alert('Login successful!');
+
+        if (data.user.role === 'employer') {
+        router.push('/employer-dashboard');
+      } else if (data.user.role === 'worker') {
+        router.push('/worker-dashboard');
+      } else {
         router.push('/dashboard');
+      }
       } else {
         alert(data.msg || 'Login failed');
       }

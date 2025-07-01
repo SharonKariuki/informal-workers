@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function VerifyEmailPage({ params }) {
   const router = useRouter();
-  const token = params.token;
+  const { token } = use(params); // ✅ unwrap the params promise
 
   const [status, setStatus] = useState({
     loading: true,

@@ -6,8 +6,8 @@ const path = require('path');
 
 // Route imports
 const authRoutes = require('./routes/authRoutes');
-const workerRoutes = require('./routes/workerRoutes');
-const employerRoutes = require('./routes/employerRoutes');
+const workerRoutes = require('./routes/workers');
+const employerRoutes = require('./routes/employers');
 
 const app = express();
 
@@ -27,6 +27,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/employers', employerRoutes);
+app.use('/uploads', express.static('uploads'));
+
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {

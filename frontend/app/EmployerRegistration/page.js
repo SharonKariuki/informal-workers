@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { jwtDecode } from 'jwt-decode';
 
 import {
   BaseFormLayout,
@@ -13,10 +14,11 @@ import {
   RadioButton,
   Checkbox
 } from '@/components/forms';
-import { useRegistrationForm } from '@/hooks/useRegistrationForm';
+import { useRegistrationForm } from '@/hooks/useEmployerRegistrationForm';
 
 export default function EmployerRegistrationPage() {
-  const [hoveredUpload, setHoveredUpload] = useState(null);
+  const searchParams = new URLSearchParams();
+  // const [hoveredUpload, setHoveredUpload] = useState(null);
   const router = useRouter();
 
   const {
@@ -31,6 +33,8 @@ export default function EmployerRegistrationPage() {
     hasCriminalRecord: 'no', explanation: '',
     confirmInfo: false, consent: false
   });
+  const [hoveredUpload, setHoveredUpload] = useState(null);
+
 
   // Auto-fill email from localStorage after login
   useEffect(() => {
@@ -39,29 +43,62 @@ export default function EmployerRegistrationPage() {
       setFormData((prev) => ({ ...prev, email: storedUser.email }));
     }
   }, []);
-
+const renderFilePreview = (file, isImage =false) => {
+  if(!file) return null;
+  return (
+    <div className= "mt-2">
+      {isImage && file.type.startsWith('image') ? (
+        <img
+          src={URL.createObjectURL(file)}
+          alt="File Preview"
+          className="w-full h-32 object-cover rounded-lg"
+        />
+      ) : (
+        <p className="text-sm text-green">Uploaded: {file.name}</p>
+      )}
+    </div>
+);
+};
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('✅ Submit button clicked');
     if (!validate()) return;
 
     setIsSubmitting(true);
     try {
+const searchParams = new URLSearchParams(window.location.search);
+const token = searchParams.get('token');
+console.log('🔍 Token from URL:', token);
+if (!token) throw new Error('User not found. Please verify your email.');
+
+    const decoded = jwtDecode(token);
+    console.log('decoded token:', decoded);
+    const userId = decoded?.id;
+    if (!userId) throw new Error('Invalid token. Please try again.');
+
       const data = new FormData();
       for (const key in formData) {
         if (formData[key]) data.append(key, formData[key]);
       }
       data.append('role', 'employer');
 
-      const res = await fetch('http://localhost:5000/api/employers/register', {
+     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/employers/register?userId=${userId}` , {
         method: 'POST',
         body: data,
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Registration failed');
+         if (!res.ok) {
+      console.error('server error details', {
+    status: res.status,
+    statusText: res.statusText,
+    errorBody: result,
+        });
+      throw new Error(result.msg || 'Registration failed');
+    }
 
       alert('Employer registered successfully!');
-      router.push('/profile/pending'); // or your target route
+      router.push('/signin'); // or your target route
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -138,6 +175,7 @@ export default function EmployerRegistrationPage() {
               onMouseLeave={() => setHoveredUpload(null)}
               error={errors.idFront}
             />
+            {renderFilePreview(formData.idFront, true)}
             <FileUpload
               label="Back Side of ID*"
               side="idBack"
@@ -147,6 +185,7 @@ export default function EmployerRegistrationPage() {
               onMouseLeave={() => setHoveredUpload(null)}
               error={errors.idBack}
             />
+            {renderFilePreview(formData.idBack, true)}
           </div>
         </Section>
 
@@ -185,7 +224,7 @@ export default function EmployerRegistrationPage() {
         </Section>
 
         {/* Consent */}
-        <Section title="Terms & Conditions" icon="✅">
+        <Section title="Terms & Conditions" icon="📝">
           <div className="space-y-4">
             <Checkbox
               name="confirmInfo"

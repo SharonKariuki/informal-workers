@@ -82,6 +82,7 @@ exports.signup = async (req, res) => {
   }
 };
 
+
 /**
  * @desc    Verify email
  * @route   GET /api/auth/verify-email/:token
@@ -113,7 +114,12 @@ exports.verifyEmail = async (req, res) => {
 
     const token = signToken(user._id);
 
-    res.redirect(`${process.env.CLIENT_URL}/role-selection?token=${token}`);
+  res.status(200).json({
+  status: 'success',
+  message: 'Email verified successfully.',
+  token
+});
+
 
   } catch (err) {
     console.error('Verify email error:', err);
@@ -174,14 +180,22 @@ exports.signin = async (req, res) => {
         message: 'Please verify your email before logging in.'
       });
     }
+    // Generate JWT token
+  const token = signToken(user._id);
 
-    const token = signToken(user._id);
-
-    res.status(200).json({
+// Redirect to the frontend with the JWT token in the URL
+res.status(200).json({
       status: 'success',
       token,
-      data: { user }
+      user: {
+        id: user._id,
+        role: user.role,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
     });
+
   } catch (err) {
     console.error('Signin error:', err);
     res.status(500).json({ status: 'fail', message: 'Login failed. Please try again.' });

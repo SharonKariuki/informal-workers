@@ -1,15 +1,13 @@
-const Employer = require('../models/Employer');
+const employer = require('../models/Employer');
 
 /**
- * @desc    Register an employer profile
+ * @desc    Register a employer profile
  * @route   POST /api/employers/register?userId=...
  * @access  Private (after email verification)
  */
 exports.registerEmployer = async (req, res) => {
   try {
     const { userId } = req.query;
-    const employerData = req.body;
-
     if (!userId) {
       return res.status(400).json({
         status: 'fail',
@@ -17,7 +15,7 @@ exports.registerEmployer = async (req, res) => {
       });
     }
 
-    // Optional: Check if this user already has a profile
+    // Optional: Check if employer profile already exists
     const existing = await Employer.findOne({ user: userId });
     if (existing) {
       return res.status(409).json({
@@ -26,21 +24,24 @@ exports.registerEmployer = async (req, res) => {
       });
     }
 
-    const employer = await Employer.create({
-      ...employerData,
+    const employerData = {
+      ...req.body,
+      skills: JSON.parse(req.body.skills || '[]'),
       user: userId
-    });
+    };
+
+    const employer = await employer.create(employerData);
 
     res.status(201).json({
       status: 'success',
-      message: 'Employer profile registered successfully.',
+      message: 'employer profile registered successfully.',
       data: { employer }
     });
   } catch (error) {
-    console.error('Employer registration error:', error);
+    console.error('employer registration error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Employer registration failed.',
+      message: 'employer registration failed.',
       error: error.message
     });
   }

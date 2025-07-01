@@ -66,7 +66,7 @@ export default function RoleSelection() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push(`/${selectedRole === 'Employer' ? 'EmployerRegistration' : 'WorkerRegistration'}`);
+       router.push(`/${selectedRole === 'Employer' ? 'EmployerRegistration' : 'WorkerRegistration'}?token=${token}`);
       } else {
         alert(data.message || 'Failed to set role.');
         console.error('Set role error:', data);

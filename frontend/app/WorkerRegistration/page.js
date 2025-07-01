@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import {jwtDecode} from 'jwt-decode';
+import {useSearchParams, useRouter} from 'next/navigation';
 
 import { 
   BaseFormLayout, 
@@ -12,9 +14,14 @@ import {
   RadioButton, 
   Checkbox 
 } from '@/components/forms';
-import { useRegistrationForm } from '@/hooks/useRegistrationForm';
+import { useRegistrationForm } from '@/hooks/useWorkerRegistrationForm';
+
 
 export default function WorkerRegistrationForm() {
+ const searchParams = useSearchParams();
+  const router = useRouter();
+  // const token = searchParams.get('token');
+
   const [hasCert, setHasCert] = useState(false);
   const [criminalRecord, setCriminalRecord] = useState('No');
   const [skillInput, setSkillInput] = useState('');
@@ -57,7 +64,8 @@ export default function WorkerRegistrationForm() {
     consent: false,
     idFront: null,
     idBack: null,
-    cv: null
+    cv: null,
+    certificate: null,
   });
 
   const addSkill = () => {
@@ -70,14 +78,35 @@ export default function WorkerRegistrationForm() {
   const removeSkill = (skill) => {
     setSkills(skills.filter((s) => s !== skill));
   };
+    const renderFilePreview = (file, isImage = false) => {
+    if (!file) return null;
+    return (
+      <div className="mt-2">
+        {isImage && file.type.startsWith('image') ? (
+          <img
+            src={URL.createObjectURL(file)}
+            alt="Preview"
+            className="w-32 h-20 object-cover rounded border"
+          />
+        ) : (
+          <p className="text-sm text-green-600">Uploaded: {file.name}</p>
+        )}
+      </div>
+    );
+  };
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validate()) return;
 
   setIsSubmitting(true);
   try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || !user._id) throw new Error('User not found. Please log in again.');
+   const searchParams = new URLSearchParams(window.location.search);
+const token = searchParams.get('token');
+if (!token) throw new Error('User not found. Please verify your email.');
+
+    const decoded = jwtDecode(token);
+    const userId = decoded?.id;
+    if (!userId) throw new Error('Invalid token. Please try again.');
 
     const data = new FormData();
     for (const key in formData) {
@@ -86,16 +115,23 @@ const handleSubmit = async (e) => {
     data.append('skills', JSON.stringify(skills));
     data.append('role', 'worker');
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/workers/register?userId=${user._id}`, {
-      method: 'POST',
-      body: data,
-    });
+const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/workers/register?userId=${userId}`, {
+  method: 'POST',
+  body: data,
+});
+
 
     const result = await res.json();
-    if (!res.ok) throw new Error(result.message || 'Registration failed');
-
+    if (!res.ok) {
+      console.error('server error details', {
+    status: res.status,
+    statusText: res.statusText,
+    errorBody: result,
+        });
+      throw new Error(result.msg || 'Registration failed');
+    }
     alert('🎉 Worker registered successfully!');
-    router.push('/profile/pending');
+    router.push('/signin');
   } catch (err) {
     console.error(err);
     alert(err.message);
@@ -256,7 +292,7 @@ const handleSubmit = async (e) => {
             value={skillInput}
             onChange={(e) => setSkillInput(e.target.value)}
             placeholder="Enter a skill"
-            className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="flex-1 px-4 py-2.5 rounded-lg border text-black border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
           <button
             type="button"
@@ -321,23 +357,23 @@ const handleSubmit = async (e) => {
       </Section>
 
       {/* Certifications Section */}
-      <Section title="Certifications" icon="📜">
+     <Section title="Certifications" icon="📜">
         <div className="mb-6">
           <label className="block mb-2 font-medium text-gray-700">
             Do you have any professional certifications?
           </label>
           <div className="flex gap-6">
-            <RadioButton 
+            <RadioButton
               name="hasCert"
               value="yes"
-              label="Yes" 
+              label="Yes"
               checked={hasCert}
               onChange={() => setHasCert(true)}
             />
-            <RadioButton 
+            <RadioButton
               name="hasCert"
               value="no"
-              label="No" 
+              label="No"
               checked={!hasCert}
               onChange={() => setHasCert(false)}
             />
@@ -345,18 +381,18 @@ const handleSubmit = async (e) => {
         </div>
         {hasCert && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput 
+            <FormInput
               name="certificationName"
               value={formData.certificationName}
               onChange={handleChange}
-              placeholder="Certification Name" 
+              placeholder="Certification Name"
               icon="badge"
             />
-            <FormInput 
+            <FormInput
               name="issuingOrg"
               value={formData.issuingOrg}
               onChange={handleChange}
-              placeholder="Issuing Organization" 
+              placeholder="Issuing Organization"
               icon="organization"
             />
             <input
@@ -366,25 +402,26 @@ const handleSubmit = async (e) => {
               onChange={handleChange}
               className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-black"
             />
-            <FileUpload 
+            <FileUpload
               label="Upload Certificate"
               side="certificate"
               onChange={(e) => handleFileChange(e, 'certificate')}
               accept=".pdf,.jpg,.jpeg,.png"
             />
+            {renderFilePreview(formData.certificate)}
           </div>
         )}
       </Section>
 
       {/* Upload CV Section */}
       <Section title="Upload CV" icon="📄">
-        <FileUpload 
+        <FileUpload
           label="CV/Resume (PDF, DOC, DOCX)"
           side="cv"
           onChange={(e) => handleFileChange(e, 'cv')}
           accept=".pdf,.doc,.docx"
         />
-        <p className="text-xs text-gray-500 mt-1">Accepted formats: PDF, DOC, DOCX (Max: 5MB)</p>
+        {renderFilePreview(formData.cv)}
       </Section>
 
       {/* ID Verification Section */}
@@ -393,7 +430,7 @@ const handleSubmit = async (e) => {
           Upload both sides of your government-issued ID
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FileUpload 
+          <FileUpload
             label="Front Side of ID*"
             side="idFront"
             onChange={(e) => handleFileChange(e, 'idFront')}
@@ -402,7 +439,9 @@ const handleSubmit = async (e) => {
             onMouseLeave={() => setHoveredUpload(null)}
             error={errors.idFront}
           />
-          <FileUpload 
+          {renderFilePreview(formData.idFront, true)}
+
+          <FileUpload
             label="Back Side of ID*"
             side="idBack"
             onChange={(e) => handleFileChange(e, 'idBack')}
@@ -411,9 +450,9 @@ const handleSubmit = async (e) => {
             onMouseLeave={() => setHoveredUpload(null)}
             error={errors.idBack}
           />
+          {renderFilePreview(formData.idBack, true)}
         </div>
       </Section>
-
       {/* Background Check Section */}
       <Section title="Background Declaration" icon="🔍">
         <div className="space-y-3">
