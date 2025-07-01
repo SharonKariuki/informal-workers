@@ -1,0 +1,70 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function EmployerLoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login/employer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message);
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      router.push("/employer/dashboard");
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong.");
+    }
+  };
+
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-blue-50">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-8 rounded shadow w-full max-w-md space-y-4"
+      >
+        <h1 className="text-2xl font-bold text-blue-700">Employer Login</h1>
+        {error && <p className="text-red-600">{error}</p>}
+        <input
+          type="email"
+          placeholder="Email"
+          className="w-full border border-gray-300 p-2 rounded"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full border border-gray-300 p-2 rounded"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <button
+          type="submit"
+          className="w-full bg-blue-700 text-white py-2 rounded hover:bg-blue-800"
+        >
+          Login
+        </button>
+      </form>
+    </main>
+  );
+}
