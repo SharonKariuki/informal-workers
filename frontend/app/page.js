@@ -41,19 +41,19 @@ export default function Home() {
     {
       label: "Crafting Your CV",
       icon: <FaFileAlt />,
-      href: "/resources/cv-guide",
+      href: "https://resumewise.com/?gad_source=1&gad_campaignid=22717566875&gbraid=0AAAAADw4kP0mocGWh2QRpQVszPe9MNASo&gclid=CjwKCAjwsZPDBhBWEiwADuO6y7i7jvcwBNqfQZH0b0x0-vj2TCdMg3US0CTiqqp4RXSoXKtV6MYSgxoCttYQAvD_BwE",
       description: "Create a standout resume with our expert guide"
     },
     {
       label: "Salary Insights",
       icon: <FaMoneyBillWave />,
-      href: "/resources/salary-tools",
+      href: "https://www.deel.com/salary-insights/",
       description: "Compare salaries and negotiate better offers"
     },
     {
       label: "Career Calculator",
       icon: <FaCalculator />,
-      href: "/resources/career-calculator",
+      href: "https://workforcedevelopment.ca/career-calculator/",
       description: "Plan your career path and growth potential"
     }
   ];
@@ -148,7 +148,7 @@ export default function Home() {
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-white/10 transform perspective-1000 group-hover:rotate-y-3 transition-transform duration-700">
                 <Image
-                  src="/modern-team-collaborating.jpg"
+                  src="/images/business-people-working-together.jpg"
                   alt="Diverse team collaborating in modern office"
                   width={600}
                   height={400}

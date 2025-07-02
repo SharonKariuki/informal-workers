@@ -10,11 +10,10 @@ import {
   Briefcase,
   LogIn,
   UserPlus,
-  HomeIcon,
-  PhoneIcon,
-  LockIcon,
+  Home,
+  Phone,
+  Shield,
 } from 'lucide-react';
-import About from '@/app/about/page';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -58,9 +57,8 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center space-x-8">
             {/* Links */}
             <div className="flex space-x-8">
-              <NavItem href="/about" label="About" />
-              <NavItem href="/contact" label="Contact" icon={<PhoneIcon />} />
-              <NavItem href="/privacy" label="Privacy" icon={<LockIcon />} />
+              <NavItem href="/" label="Home" icon={<Home size={18} />} />
+              <NavItem href="/contact" label="Contact" icon={<Phone size={18} />} />
             </div>
 
             {/* Search button */}
@@ -76,14 +74,14 @@ export default function Navbar() {
             <div className="flex items-center space-x-4 ml-6">
               <Link
                 href="/signin"
-                className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 transition-colors"
+                className="flex items-center space-x-1.5 text-gray-700 hover:text-indigo-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50"
               >
                 <LogIn className="w-4 h-4" />
-                <span>Login</span>
+                <span className="font-medium">Login</span>
               </Link>
               <Link
                 href="/signup"
-                className="bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex items-center space-x-1"
+                className="bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex items-center space-x-1.5 shadow-md hover:shadow-indigo-200"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>Register</span>
@@ -130,27 +128,30 @@ export default function Navbar() {
 
         {/* Mobile Menu Links */}
         {menuOpen && (
-          <div className="lg:hidden mt-2 space-y-4 pb-6">
-            <MobileNavItem href="/workers" label="For Workers" icon={<User />} onClick={toggleMenu} />
-            <MobileNavItem href="/jobs" label="For Employers" icon={<Briefcase />} onClick={toggleMenu} />
-            <MobileNavItem href="/auth/login" label="Login" icon={<LogIn />} onClick={toggleMenu} />
-            <Link
-              href="/auth/register"
-              className="flex items-center space-x-2 justify-center bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-              onClick={toggleMenu}
-            >
-              <UserPlus className="w-5 h-5" />
-              <span>Register</span>
-            </Link>
+          <div className="lg:hidden mt-2 space-y-3 pb-6">
+            <MobileNavItem href="/" label="Home" icon={<Home size={18} />} onClick={toggleMenu} />
+            <MobileNavItem href="/benefits" label="Benefits" icon={<Shield size={18} />} onClick={toggleMenu} />
+            <MobileNavItem href="/contact" label="Contact" icon={<Phone size={18} />} onClick={toggleMenu} />
+            <div className="pt-2 space-y-3 border-t border-gray-100 mt-2">
+              <MobileNavItem href="/signin" label="Login" icon={<LogIn size={18} />} onClick={toggleMenu} />
+              <Link
+                href="/signup"
+                className="flex items-center space-x-2 justify-center bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity shadow-md"
+                onClick={toggleMenu}
+              >
+                <UserPlus className="w-5 h-5" />
+                <span>Register</span>
+              </Link>
+            </div>
           </div>
         )}
       </div>
 
       {/* Desktop Search Panel */}
       {searchOpen && (
-        <div className="hidden lg:block absolute top-20 left-0 w-full bg-white shadow-md py-4 px-6 border-t">
+        <div className="hidden lg:block absolute top-20 left-0 w-full bg-white shadow-md py-4 px-6 border-t border-gray-100">
           <div className="max-w-7xl mx-auto relative">
-            <Search className="absolute left-4 top-3 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search jobs, skills or workers..."
@@ -159,7 +160,7 @@ export default function Navbar() {
             />
             <button
               onClick={toggleSearch}
-              className="absolute right-4 top-3 text-gray-500 hover:text-gray-700"
+              className="absolute right-4 top-3.5 text-gray-500 hover:text-gray-700"
             >
               <X className="w-5 h-5" />
             </button>
@@ -175,13 +176,11 @@ function NavItem({ href, label, icon }) {
   return (
     <Link
       href={href}
-      className="relative group text-gray-700 hover:text-indigo-600 transition-colors"
+      className="relative group text-gray-700 hover:text-indigo-600 transition-colors flex items-center space-x-1.5 px-2 py-1 rounded-lg hover:bg-gray-50"
     >
-      <div className="flex items-center space-x-1">
-        {icon}
-        <span>{label}</span>
-      </div>
-      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-full"></span>
+      {icon && <span className="text-indigo-500">{icon}</span>}
+      <span className="font-medium">{label}</span>
+      <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-4/5"></span>
     </Link>
   );
 }
@@ -192,10 +191,10 @@ function MobileNavItem({ href, label, icon, onClick }) {
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center space-x-2 text-gray-700 hover:text-indigo-600 px-2 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+      className="flex items-center space-x-3 text-gray-700 hover:text-indigo-600 px-4 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
     >
-      {icon}
-      <span>{label}</span>
+      {icon && <span className="text-indigo-500">{icon}</span>}
+      <span className="font-medium">{label}</span>
     </Link>
   );
 }

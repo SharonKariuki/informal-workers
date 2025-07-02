@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaGoogle } from 'react-icons/fa';
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
-import AuthLayout from '../../components/AuthLayout';
+import AuthLayout from '@/components/AuthLayout';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 

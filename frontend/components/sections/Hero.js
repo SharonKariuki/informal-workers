@@ -44,7 +44,7 @@ const Hero = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <Image
-              src="/gettyimages-1346944001-612x612.jpg"  // ✅ No import, just a public path
+              src="frontend\public\images\People working together.jpg"  // ✅ No import, just a public path
               alt="People working together"
               width={600}
               height={400}
