@@ -10,7 +10,11 @@ import {
   Briefcase,
   LogIn,
   UserPlus,
+  HomeIcon,
+  PhoneIcon,
+  LockIcon,
 } from 'lucide-react';
+import About from '@/app/about/page';
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -54,8 +58,9 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center space-x-8">
             {/* Links */}
             <div className="flex space-x-8">
-              <NavItem href="/workers" label="For Workers" icon={<User />} />
-              <NavItem href="/jobs" label="For Employers" icon={<Briefcase />} />
+              <NavItem href="/about" label="About" />
+              <NavItem href="/contact" label="Contact" icon={<PhoneIcon />} />
+              <NavItem href="/privacy" label="Privacy" icon={<LockIcon />} />
             </div>
 
             {/* Search button */}
