@@ -22,7 +22,7 @@ export default function VerifyEmailPage({ params }) {
         success: false,
         message: 'Invalid or missing verification token.',
       });
-      setTimeout(() => router.replace('/404'), 5000);
+      setTimeout(() => router.replace('/404'), 1000);
       return;
     }
 

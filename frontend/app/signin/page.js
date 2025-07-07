@@ -32,9 +32,9 @@ export default function SignInPage() {
         alert('Login successful!');
 
         if (data.user.role === 'employer') {
-        router.push('/employer-dashboard');
+        router.push('/employers/dashboard');
       } else if (data.user.role === 'worker') {
-        router.push('/worker-dashboard');
+        router.push('/workers/dashboard');
       } else {
         router.push('/dashboard');
       }

@@ -48,8 +48,9 @@ export const useRegistrationForm = (initialState) => {
     // ID Verification
     if (!formData.idFront) newErrors.idFront = 'Front ID is required';
     if (!formData.idBack) newErrors.idBack = 'Back ID is required';
+    if (!formData.selfie) newErrors.selfie = 'Selfie with ID is required';
 
-    // Background check (if yes, explanation is required)
+    // Background check
     if (formData.hasCriminalRecord === 'yes') {
       if (!validateRequired(formData.explanation)) {
         newErrors.explanation = 'Please explain your criminal record';

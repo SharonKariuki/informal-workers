@@ -17,19 +17,40 @@ export default function CourseManagement({ initialCourses }) {
     published: false,
   });
 
-  // Re-fetch courses from the API
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
   async function fetchCourses() {
-    const res = await fetch("/api/courses", { cache: "no-store" });
-    const data = await res.json();
-    setCourses(data);
+    try {
+      const res = await fetch("/api/courses", { cache: "no-store" });
+      if (!res.ok) {
+        console.error("Failed to fetch courses:", res.statusText);
+        return;
+      }
+      const data = await res.json();
+      setCourses(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+    }
   }
 
   const handleAddSubmit = async () => {
-    await fetch("/api/courses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newCourse),
-    });
+    try {
+      const res = await fetch("/api/courses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCourse),
+      });
+
+      if (!res.ok) {
+        console.error("Error adding course:", res.statusText);
+      } else {
+        console.log("Course added successfully");
+      }
+    } catch (err) {
+      console.error("Error adding course:", err);
+    }
 
     setIsAdding(false);
     setNewCourse({
@@ -42,27 +63,48 @@ export default function CourseManagement({ initialCourses }) {
   };
 
   const handleEditSubmit = async (courseId) => {
-    await fetch(`/api/courses/${courseId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: editedTitle,
-        description: editedDescription,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/courses/${courseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update",
+          title: editedTitle,
+          description: editedDescription,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Error updating course:", res.statusText);
+      } else {
+        console.log("Course updated successfully");
+      }
+    } catch (err) {
+      console.error("Error updating course:", err);
+    }
 
     setEditingId(null);
     fetchCourses();
   };
 
   const handleStatusChange = async (courseId, action) => {
-    await fetch(`/api/courses/${courseId}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action,
-      }),
-    });
+    try {
+      const res = await fetch(`/api/courses/${courseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Error changing status:", res.statusText);
+      } else {
+        console.log("Status changed successfully");
+      }
+    } catch (err) {
+      console.error("Error changing course status:", err);
+    }
 
     fetchCourses();
   };
@@ -84,12 +126,25 @@ export default function CourseManagement({ initialCourses }) {
   };
 
   const handleDelete = async (courseId) => {
-    await fetch(`/api/courses/${courseId}`, {
+  console.log("Deleting course ID:", courseId);
+
+  try {
+    const res = await fetch(`/api/courses/${courseId}`, {
       method: "DELETE",
     });
 
-    fetchCourses();
-  };
+    if (!res.ok) {
+      console.error("Error deleting course:", res.statusText);
+    } else {
+      console.log("Course deleted successfully");
+    }
+  } catch (err) {
+    console.error("Error deleting course:", err);
+  }
+
+  fetchCourses();
+};
+
 
   return (
     <div className="space-y-6">
@@ -172,12 +227,15 @@ export default function CourseManagement({ initialCourses }) {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {courses.length === 0 && (
+          <p className="text-gray-600">No courses found.</p>
+        )}
         {courses.map((course) => (
           <div
-            key={course.id}
+            key={course._id}
             className="border border-indigo-100 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col bg-white"
           >
-            {editingId === course.id ? (
+            {editingId === course._id ? (
               <div className="flex-grow">
                 <input
                   type="text"
@@ -215,10 +273,10 @@ export default function CourseManagement({ initialCourses }) {
               </span>
 
               <div className="flex gap-2">
-                {editingId === course.id ? (
+                {editingId === course._id ? (
                   <>
                     <button
-                      onClick={() => handleEditSubmit(course.id)}
+                      onClick={() => handleEditSubmit(course._id)}
                       className="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 font-medium"
                     >
                       Save
@@ -235,7 +293,7 @@ export default function CourseManagement({ initialCourses }) {
                     <button
                       onClick={() =>
                         handleStatusChange(
-                          course.id,
+                          course._id,
                           course.published ? "unpublish" : "publish"
                         )
                       }
@@ -251,14 +309,14 @@ export default function CourseManagement({ initialCourses }) {
                       onClick={() => {
                         setEditedTitle(course.title);
                         setEditedDescription(course.description);
-                        setEditingId(course.id);
+                        setEditingId(course._id);
                       }}
                       className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-md text-sm hover:bg-indigo-200 font-medium"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => confirmDelete(course.id)}
+                      onClick={() => confirmDelete(course._id)}
                       className="px-3 py-1 bg-red-100 text-red-800 rounded-md text-sm hover:bg-red-200 font-medium"
                     >
                       Delete

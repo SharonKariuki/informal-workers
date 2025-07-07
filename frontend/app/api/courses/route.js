@@ -1,96 +1,53 @@
-import { connectToDatabase } from "../../../../lib/mongoose";
-import Course from "../../../../models/Course";
+// ✅ File: app/api/courses/route.js
+
+import dbConnect from "@/lib/mongoose";
+import Course from "@/models/Course";
 import { NextResponse } from "next/server";
 
-export async function PATCH(request, { params }) {
-  const { id } = params;
-
+export async function GET() {
   try {
-    const body = await request.json();
+    await dbConnect();
 
-    const { action, title, description } = body;
+    const courses = await Course.find().sort({ createdAt: -1 });
 
-    if (!action) {
-      return NextResponse.json(
-        { success: false, message: "No action specified." },
-        { status: 400 }
-      );
-    }
-
-    await connectToDatabase();
-
-    let updates = {};
-
-    if (action === "update") {
-      if (title !== undefined) updates.title = title;
-      if (description !== undefined) updates.description = description;
-    } else if (action === "publish") {
-      updates.published = true;
-    } else if (action === "unpublish") {
-      updates.published = false;
-    } else {
-      return NextResponse.json(
-        { success: false, message: `Invalid action: ${action}` },
-        { status: 400 }
-      );
-    }
-
-    const updatedCourse = await Course.findByIdAndUpdate(
-      id,
-      updates,
-      { new: true }
-    );
-
-    if (!updatedCourse) {
-      return NextResponse.json(
-        { success: false, message: "Course not found." },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `Course ${action === "update" ? "updated" : action + "ed"} successfully`,
-      course: updatedCourse,
-    });
+    return NextResponse.json(courses);
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      {
-        success: false,
-        message: `Course ${params?.action || "operation"} failed`,
-        error: error.message,
-      },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(request, { params }) {
-  const { id } = params;
-
+export async function POST(request) {
   try {
-    await connectToDatabase();
+    const body = await request.json();
 
-    const deletedCourse = await Course.findByIdAndDelete(id);
+    const { title, description, published } = body;
 
-    if (!deletedCourse) {
+    if (!title || typeof title !== "string" || title.trim() === "") {
       return NextResponse.json(
-        { success: false, message: "Course not found." },
-        { status: 404 }
+        { success: false, message: "Title is required." },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Course deleted successfully",
+    await dbConnect();
+
+    const course = await Course.create({
+      title: title.trim(),
+      description: description || "",
+      published: published || false,
     });
+
+    return NextResponse.json(course, { status: 201 });
   } catch (error) {
-    console.error(error);
+    console.error("Error creating course:", error);
     return NextResponse.json(
       {
         success: false,
-        message: "Course deletion failed",
+        message: "Failed to create course",
         error: error.message,
       },
       { status: 500 }

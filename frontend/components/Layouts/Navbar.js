@@ -19,6 +19,7 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [user, setUser] = useState(null);
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const toggleSearch = () => setSearchOpen((prev) => !prev);
@@ -27,10 +28,22 @@ export default function Navbar() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
-
     window.addEventListener('scroll', handleScroll);
+
+    const userJson = localStorage.getItem('kazilinkUser');
+    if (userJson) {
+      setUser(JSON.parse(userJson));
+    }
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const profileLink =
+    user?.role === 'employer'
+      ? '/employer/dashboard'
+      : user?.role === 'worker'
+      ? '/worker/dashboard'
+      : '#';
 
   return (
     <nav
@@ -41,9 +54,7 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navbar top */}
         <div className="flex justify-between items-center h-20">
-          {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
             <span className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-500 rounded-lg flex items-center justify-center">
               <Briefcase className="w-4 h-4 text-white" />
@@ -55,6 +66,7 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center space-x-8">
+<<<<<<< HEAD
             {/* Links */}
             <div className="flex space-x-8">
               <NavItem href="/" label="Home" icon={<Home size={18} />} />
@@ -87,17 +99,59 @@ export default function Navbar() {
                 <span>Register</span>
               </Link>
             </div>
+=======
+            <NavItem href="/" label="Home" icon={<Home size={18} />} />
+            {user?.isLoggedIn && (
+              <>
+                <NavItem href="/contact" label="Contact" icon={<Phone size={18} />} />
+                <button
+                  onClick={toggleSearch}
+                  className="ml-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                  aria-label="Search"
+                >
+                  <Search className="w-5 h-5 text-gray-600" />
+                </button>
+                <Link
+                  href={profileLink}
+                  className="ml-4 flex items-center space-x-1.5 text-gray-700 hover:text-indigo-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="font-medium">Profile</span>
+                </Link>
+              </>
+            )}
+            {!user?.isLoggedIn && (
+              <div className="flex items-center space-x-4 ml-6">
+                <Link
+                  href="/signin"
+                  className="flex items-center space-x-1.5 text-gray-700 hover:text-indigo-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span className="font-medium">Login</span>
+                </Link>
+                <Link
+                  href="/signup"
+                  className="bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex items-center space-x-1.5 shadow-md hover:shadow-indigo-200"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Register</span>
+                </Link>
+              </div>
+            )}
+>>>>>>> 1e4ac84 (initial commit)
           </div>
 
           {/* Mobile Menu Buttons */}
           <div className="flex lg:hidden items-center space-x-4">
-            <button
-              onClick={toggleSearch}
-              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              aria-label="Search"
-            >
-              <Search className="w-5 h-5 text-gray-600" />
-            </button>
+            {user?.isLoggedIn && (
+              <button
+                onClick={toggleSearch}
+                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                aria-label="Search"
+              >
+                <Search className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
             <button
               onClick={toggleMenu}
               className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -113,7 +167,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Search Bar */}
-        {(searchOpen || menuOpen) && (
+        {user?.isLoggedIn && (searchOpen || menuOpen) && (
           <div className="lg:hidden mt-2 pb-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
@@ -130,6 +184,7 @@ export default function Navbar() {
         {menuOpen && (
           <div className="lg:hidden mt-2 space-y-3 pb-6">
             <MobileNavItem href="/" label="Home" icon={<Home size={18} />} onClick={toggleMenu} />
+<<<<<<< HEAD
             <MobileNavItem href="/benefits" label="Benefits" icon={<Shield size={18} />} onClick={toggleMenu} />
             <MobileNavItem href="/contact" label="Contact" icon={<Phone size={18} />} onClick={toggleMenu} />
             <div className="pt-2 space-y-3 border-t border-gray-100 mt-2">
@@ -143,12 +198,36 @@ export default function Navbar() {
                 <span>Register</span>
               </Link>
             </div>
+=======
+            {user?.isLoggedIn ? (
+              <>
+                <MobileNavItem href="/contact" label="Contact" icon={<Phone size={18} />} onClick={toggleMenu} />
+                <MobileNavItem href={profileLink} label="Profile" icon={<User size={18} />} onClick={toggleMenu} />
+              </>
+            ) : (
+              <div className="pt-2 space-y-3 border-t border-gray-100 mt-2">
+                <MobileNavItem href="/signin" label="Login" icon={<LogIn size={18} />} onClick={toggleMenu} />
+                <Link
+                  href="/signup"
+                  className="flex items-center space-x-2 justify-center bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity shadow-md"
+                  onClick={toggleMenu}
+                >
+                  <UserPlus className="w-5 h-5" />
+                  <span>Register</span>
+                </Link>
+              </div>
+            )}
+>>>>>>> 1e4ac84 (initial commit)
           </div>
         )}
       </div>
 
       {/* Desktop Search Panel */}
+<<<<<<< HEAD
       {searchOpen && (
+=======
+      {user?.isLoggedIn && searchOpen && (
+>>>>>>> 1e4ac84 (initial commit)
         <div className="hidden lg:block absolute top-20 left-0 w-full bg-white shadow-md py-4 px-6 border-t border-gray-100">
           <div className="max-w-7xl mx-auto relative">
             <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />

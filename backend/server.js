@@ -8,8 +8,13 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const workerRoutes = require('./routes/workers');
 const employerRoutes = require('./routes/employers');
-
+const matchRoutes = require('./routes/match');
 const app = express();
+const jobRoutes = require('./routes/jobRoutes');
+const adminRoutes = require('./routes/admin');
+const kycRoutes = require("./routes/kyc");
+const reviewRoutes = require('./routes/reviews');
+const bannerRoutes = require('./routes/banner');
 
 // Middleware
 app.use(cors({
@@ -28,6 +33,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/employers', employerRoutes);
 app.use('/uploads', express.static('uploads'));
+app.use('/api/match', matchRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/admin', adminRoutes);
+app.use("/api/kyc", kycRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/banners', bannerRoutes);
+app.use("/api/admin/courses", require("./routes/courses"));
+
+
 
 
 // MongoDB connection

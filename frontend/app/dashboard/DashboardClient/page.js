@@ -1,173 +1,168 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { toast, ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-import DashboardStats from "../../../components/sections/DashboardStats";
-import UserManagement from "../../../components/sections/UserManagement";
-import KYCManagement from "../../../components/sections/KYCManagement";
-import CourseManagement from "../../../components/sections/CourseManagement";
+import Sidebar from "@/components/sections/Sidebar";
+import DashboardStats from "@/components/sections/DashboardStats";
+import CourseManagement from "@/components/sections/CourseManagement";
+import UserManagement from "@/components/sections/UserManagement";
+import KYCManagement from "@/components/sections/KYCManagement";
+import JobPostManagement from "@/components/sections/JobPostManagement";
+import ReviewManagement from "@/components/sections/ReviewManagement";
+import ContentManagement from "@/components/sections/ContentManagement";
+import Analytics from "@/components/sections/Analytics";
 
-export default function DashboardClient({ session }) {
+const BASE_URL = "http://localhost:5000/api/admin";
+
+const SECTIONS = [
+  { name: "Analytics", icon: "📊" },
+  { name: "Users", icon: "👥" },
+  { name: "KYC", icon: "🆔" },
+  { name: "Jobs", icon: "💼" },
+  { name: "Reviews", icon: "⭐" },
+  { name: "Courses", icon: "📚" },
+  { name: "Content", icon: "📝" },
+];
+
+export default function DashboardClient() {
+  const router = useRouter();
+  const [active, setActive] = useState("Analytics");
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState("");
   const [data, setData] = useState({
+    stats: {},
     users: [],
     kycData: [],
-    courses: []
+    jobs: [],
+    reviews: [],
+    banners: [],
+    courses: [],
   });
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [usersRes, kycRes, coursesRes] = await Promise.all([
-        fetch("/api/users"),
-        fetch("/api/kyc"),
-        fetch("/api/courses"),
-      ]);
+  useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken) {
+      toast.error("Access denied. Please sign in.");
+      return router.push("/auth/signin");
+    }
 
-      if (!usersRes.ok || !kycRes.ok || !coursesRes.ok) {
-        throw new Error("Failed to fetch one or more datasets.");
+    try {
+      const decoded = jwtDecode(storedToken);
+      if (decoded.role !== "admin") {
+        toast.error("Access denied. Admins only.");
+        return router.push("/auth/signin");
       }
 
-      const users = await usersRes.json();
-      const kycData = await kycRes.json();
-      const courses = await coursesRes.json();
-
-      setData({ users, kycData, courses });
+      setToken(storedToken);
+      fetchData(storedToken);
     } catch (error) {
-      console.error(error);
-      toast.error("Failed to load dashboard data");
+      console.error("Token decode error:", error);
+      toast.error("Invalid token. Please log in again.");
+      return router.push("/auth/signin");
+    }
+  }, []);
+
+  const fetchData = async (authToken) => {
+    setLoading(true);
+    try {
+      const headers = { Authorization: `Bearer ${authToken}` };
+
+      const [
+        statsRes,
+        usersRes,
+        kycRes,
+        jobsRes,
+        reviewsRes,
+        bannersRes,
+      ] = await Promise.all([
+        fetch(`${BASE_URL}/stats`, { headers }),
+        fetch(`${BASE_URL}/users`, { headers }),
+        fetch(`${BASE_URL}/kyc/pending`, { headers }),
+        fetch(`${BASE_URL}/jobs`, { headers }),
+        fetch(`${BASE_URL}/reviews`, { headers }),
+        fetch(`${BASE_URL}/banners`, { headers }),
+      ]);
+
+      const [
+        stats,
+        users,
+        kycData,
+        jobs,
+        reviews,
+        banners,
+      ] = await Promise.all([
+        statsRes.json(),
+        usersRes.json(),
+        kycRes.json(),
+        jobsRes.json(),
+        reviewsRes.json(),
+        bannersRes.json(),
+      ]);
+      console.log("KYC Data:", kycData);
+
+
+      setData({ stats, users, kycData, jobs, reviews, banners });
+    } catch (error) {
+      console.error("Dashboard fetch error:", error);
+      toast.error("Failed to load dashboard data.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleKYCAction = async (kycId, action) => {
-    try {
-      const response = await fetch(`/api/kyc/${kycId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-
-      if (!response.ok) throw new Error("Action failed");
-
-      toast.success(`KYC ${action}d successfully`);
-      fetchData();
-    } catch (error) {
-      console.error(error);
-      toast.error(error.message || `Failed to ${action} KYC`);
-    }
-  };
-
-  const handleCourseAction = async (courseId, action, updates = {}) => {
-    try {
-      const method = action === "delete" ? "DELETE" : "PATCH";
-      const response = await fetch(`/api/courses/${courseId}`, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: method !== "DELETE" ? JSON.stringify({ action, ...updates }) : undefined,
-      });
-
-      if (!response.ok) throw new Error("Action failed");
-
-      toast.success(`Course ${action === "update" ? "updated" : action + "d"} successfully`);
-      fetchData();
-    } catch (error) {
-      console.error(error);
-      toast.error(error.message || `Failed to ${action} course`);
-    }
-  };
-
-  const handleAddCourse = async (newCourse) => {
-    try {
-      const response = await fetch(`/api/courses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newCourse),
-      });
-
-      if (!response.ok) throw new Error("Failed to add course.");
-
-      toast.success("Course added successfully!");
-      fetchData();
-    } catch (error) {
-      console.error(error);
-      toast.error(error.message || "Failed to add course.");
+  const renderSection = () => {
+    switch (active) {
+      case "Analytics":
+        return <Analytics stats={data.stats} loading={loading} />;
+      case "Users":
+        return <UserManagement users={data.users} refresh={() => fetchData(token)} loading={loading} />;
+      case "KYC":
+        return <KYCManagement kycData={data.kycData} refresh={() => fetchData(token)} loading={loading} />;
+      case "Jobs":
+        return <JobPostManagement jobs={data.jobs} refresh={() => fetchData(token)} loading={loading} />;
+      case "Reviews":
+        return <ReviewManagement reviews={data.reviews} refresh={() => fetchData(token)} loading={loading} />;
+      case "Courses":
+        return <CourseManagement />;
+      case "Content":
+        return <ContentManagement banners={data.banners} refresh={() => fetchData(token)} loading={loading} />;
+      default:
+        return null;
     }
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 p-6 md:p-8">
+    <div className="flex min-h-screen bg-indigo-50 pt-16">
       <ToastContainer />
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-indigo-900 mb-2">KaziLink Admin Dashboard</h1>
-          <p className="text-indigo-800">Welcome, {session.user.email}</p>
+      <Sidebar sections={SECTIONS} active={active} onSelect={setActive} />
+
+      <main className="flex-1 p-6 overflow-x-hidden">
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h1 className="text-3xl font-bold text-indigo-900 mb-2">
+            {active === "Analytics" ? "Dashboard Overview" : `${active} Management`}
+          </h1>
+          <p className="text-indigo-600">
+            {active === "Analytics"
+              ? "Key metrics and platform analytics"
+              : `Manage all ${active.toLowerCase()} related activities`}
+          </p>
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-indigo-900">Loading dashboard data...</div>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          </div>
         ) : (
           <>
-            <DashboardStats
-              stats={{
-                users: data.users.length,
-                kyc: data.kycData.length,
-                courses: data.courses.length,
-              }}
-              className="mb-10"
-            />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-md overflow-hidden border border-indigo-100">
-                <div className="p-6">
-                  <h2 className="text-xl font-semibold text-indigo-900 mb-4 flex items-center">
-                    <span className="w-2 h-6 bg-indigo-600 rounded-full mr-3"></span>
-                    User Management
-                  </h2>
-                  <UserManagement users={data.users} />
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-md overflow-hidden border border-indigo-100">
-                <div className="p-6">
-                  <h2 className="text-xl font-semibold text-indigo-900 mb-4 flex items-center">
-                    <span className="w-2 h-6 bg-blue-600 rounded-full mr-3"></span>
-                    KYC Management
-                  </h2>
-                  <KYCManagement
-                    kycData={data.kycData}
-                    onApprove={(kycId) => handleKYCAction(kycId, "approve")}
-                    onReject={(kycId) => handleKYCAction(kycId, "reject")}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-indigo-100">
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-indigo-900 mb-4 flex items-center">
-                  <span className="w-2 h-6 bg-indigo-500 rounded-full mr-3"></span>
-                  Course Management
-                </h2>
-                <CourseManagement
-                  courses={data.courses}
-                  onStatusChange={(courseId, action) => handleCourseAction(courseId, action)}
-                  onEdit={(courseId, updates) => handleCourseAction(courseId, "update", updates)}
-                  onDelete={(courseId) => handleCourseAction(courseId, "delete")}
-                  onAdd={handleAddCourse}
-                />
-              </div>
-            </div>
+            {active === "Analytics" && <DashboardStats stats={data.stats} />}
+            {renderSection()}
           </>
         )}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

@@ -50,7 +50,7 @@ export default function EditJobPage() {
       body: JSON.stringify(form),
     });
 
-    router.push("/employer/dashboard");
+    router.push("/employers/dashboard");
   };
 
   return (

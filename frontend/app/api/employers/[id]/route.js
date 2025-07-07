@@ -1,48 +1,38 @@
-// app/api/employers/[id]/route.js
-
-const fakeEmployers = {
-  1: {
-    id: 1,
-    name: "Acme Corp",
-    company: "Acme Inc.",
-    location: "Nairobi",
-    email: "info@acme.com",
-    phone: "+254700000000",
-    industry: "Tech",
-    companySize: "50-200",
-    foundedYear: 2015,
-    bio: "Acme is a leading company in innovative solutions.",
-    jobs: [
-      {
-        id: 101,
-        title: "Software Engineer",
-        location: "Nairobi",
-        type: "Full Time",
-        description: "Work on cool stuff!"
-      }
-    ]
-  }
-};
+import { connectToDatabase } from "../../../../lib/mongoose";
+import Employer from "../../../../models/Employer";
+import  Types  from "./mongoose";
+import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
-  const id = params.id;
-  const employer = fakeEmployers[id];
+  const { id } = params;
 
-  if (!employer) {
-    return new Response(
-      JSON.stringify({ message: "Employer not found" }),
-      {
-        status: 404,
-        headers: { "Content-Type": "application/json" }
-      }
+  try {
+    await connectToDatabase();
+
+    // Validate ObjectId if using MongoDB _id
+    if (!Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { message: "Invalid employer ID." },
+        { status: 400 }
+      );
+    }
+
+    const employer = await Employer.findById(id).lean();
+
+    if (!employer) {
+      return NextResponse.json(
+        { message: "Employer not found." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(employer);
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { message: "Error fetching employer.", error: error.message },
+      { status: 500 }
     );
   }
-
-  return new Response(
-    JSON.stringify(employer),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    }
-  );
 }
+

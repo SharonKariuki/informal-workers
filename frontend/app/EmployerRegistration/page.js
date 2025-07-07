@@ -17,8 +17,6 @@ import {
 import { useRegistrationForm } from '@/hooks/useEmployerRegistrationForm';
 
 export default function EmployerRegistrationPage() {
-  const searchParams = new URLSearchParams();
-  // const [hoveredUpload, setHoveredUpload] = useState(null);
   const router = useRouter();
 
   const {
@@ -29,36 +27,37 @@ export default function EmployerRegistrationPage() {
     firstName: '', lastName: '', email: '', phone: '',
     dob: '', gender: '',
     street: '', city: '', state: '', zip: '', country: '',
-    idFront: null, idBack: null,
+    idFront: null, idBack: null, selfie: null,
     hasCriminalRecord: 'no', explanation: '',
     confirmInfo: false, consent: false
   });
+
   const [hoveredUpload, setHoveredUpload] = useState(null);
 
-
-  // Auto-fill email from localStorage after login
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     if (storedUser?.email) {
       setFormData((prev) => ({ ...prev, email: storedUser.email }));
     }
   }, []);
-const renderFilePreview = (file, isImage =false) => {
-  if(!file) return null;
-  return (
-    <div className= "mt-2">
-      {isImage && file.type.startsWith('image') ? (
-        <img
-          src={URL.createObjectURL(file)}
-          alt="File Preview"
-          className="w-full h-32 object-cover rounded-lg"
-        />
-      ) : (
-        <p className="text-sm text-green">Uploaded: {file.name}</p>
-      )}
-    </div>
-);
-};
+
+  const renderFilePreview = (file, isImage = false) => {
+    if (!file) return null;
+    return (
+      <div className="mt-2">
+        {isImage && file.type?.startsWith('image') ? (
+          <img
+            src={URL.createObjectURL(file)}
+            alt="File Preview"
+            className="w-full h-32 object-cover rounded-lg"
+          />
+        ) : (
+          <p className="text-sm text-green-600">Uploaded: {file.name}</p>
+        )}
+      </div>
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('✅ Submit button clicked');
@@ -66,15 +65,13 @@ const renderFilePreview = (file, isImage =false) => {
 
     setIsSubmitting(true);
     try {
-const searchParams = new URLSearchParams(window.location.search);
-const token = searchParams.get('token');
-console.log('🔍 Token from URL:', token);
-if (!token) throw new Error('User not found. Please verify your email.');
+      const searchParams = new URLSearchParams(window.location.search);
+      const token = searchParams.get('token');
+      if (!token) throw new Error('User not found. Please verify your email.');
 
-    const decoded = jwtDecode(token);
-    console.log('decoded token:', decoded);
-    const userId = decoded?.id;
-    if (!userId) throw new Error('Invalid token. Please try again.');
+      const decoded = jwtDecode(token);
+      const userId = decoded?.id;
+      if (!userId) throw new Error('Invalid token. Please try again.');
 
       const data = new FormData();
       for (const key in formData) {
@@ -82,23 +79,23 @@ if (!token) throw new Error('User not found. Please verify your email.');
       }
       data.append('role', 'employer');
 
-     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/employers/register?userId=${userId}` , {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/employers/register?userId=${userId}`, {
         method: 'POST',
         body: data,
       });
 
       const result = await res.json();
-         if (!res.ok) {
-      console.error('server error details', {
-    status: res.status,
-    statusText: res.statusText,
-    errorBody: result,
+      if (!res.ok) {
+        console.error('server error details', {
+          status: res.status,
+          statusText: res.statusText,
+          errorBody: result,
         });
-      throw new Error(result.msg || 'Registration failed');
-    }
+        throw new Error(result.msg || 'Registration failed');
+      }
 
       alert('Employer registered successfully!');
-      router.push('/signin'); // or your target route
+      router.push('/signin');
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -108,7 +105,7 @@ if (!token) throw new Error('User not found. Please verify your email.');
   };
 
   return (
-    <div className="px-4 pt-8">
+    <div className="px-4 pt-24">
       <BaseFormLayout
         title="Register as an Employer"
         description="Create your profile to start hiring top talent"
@@ -170,22 +167,34 @@ if (!token) throw new Error('User not found. Please verify your email.');
               label="Front Side of ID*"
               side="idFront"
               onChange={(e) => handleFileChange(e, 'idFront')}
-              isHovered={hoveredUpload === 'front'}
-              onMouseEnter={() => setHoveredUpload('front')}
+              isHovered={hoveredUpload === 'idFront'}
+              onMouseEnter={() => setHoveredUpload('idFront')}
               onMouseLeave={() => setHoveredUpload(null)}
               error={errors.idFront}
             />
             {renderFilePreview(formData.idFront, true)}
+
             <FileUpload
               label="Back Side of ID*"
               side="idBack"
               onChange={(e) => handleFileChange(e, 'idBack')}
-              isHovered={hoveredUpload === 'back'}
-              onMouseEnter={() => setHoveredUpload('back')}
+              isHovered={hoveredUpload === 'idBack'}
+              onMouseEnter={() => setHoveredUpload('idBack')}
               onMouseLeave={() => setHoveredUpload(null)}
               error={errors.idBack}
             />
             {renderFilePreview(formData.idBack, true)}
+
+            <FileUpload
+              label="Selfie with ID*"
+              side="selfie"
+              onChange={(e) => handleFileChange(e, 'selfie')}
+              isHovered={hoveredUpload === 'selfie'}
+              onMouseEnter={() => setHoveredUpload('selfie')}
+              onMouseLeave={() => setHoveredUpload(null)}
+              error={errors.selfie}
+            />
+            {renderFilePreview(formData.selfie, true)}
           </div>
         </Section>
 

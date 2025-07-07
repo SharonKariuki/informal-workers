@@ -1,9 +1,18 @@
-import { connectToDatabase } from "../../../../lib/mongoose";
-import Course from "../../../../models/Course";
+// ✅ File: app/api/courses/[id]/route.js
+import dbConnect from "@/lib/mongoose";
+import Course from "@/models/Course";
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 
 export async function PATCH(request, { params }) {
   const { id } = params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json(
+      { success: false, message: "Invalid course ID." },
+      { status: 400 }
+    );
+  }
 
   try {
     const body = await request.json();
@@ -17,7 +26,7 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    await connectToDatabase();
+    await dbConnect();
 
     let updates = {};
 
@@ -35,11 +44,9 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const updatedCourse = await Course.findByIdAndUpdate(
-      id,
-      updates,
-      { new: true }
-    );
+    const updatedCourse = await Course.findByIdAndUpdate(id, updates, {
+      new: true,
+    });
 
     if (!updatedCourse) {
       return NextResponse.json(
@@ -58,7 +65,7 @@ export async function PATCH(request, { params }) {
     return NextResponse.json(
       {
         success: false,
-        message: `Course ${params?.action || "operation"} failed`,
+        message: `Course operation failed`,
         error: error.message,
       },
       { status: 500 }
@@ -69,8 +76,15 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   const { id } = params;
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json(
+      { success: false, message: "Invalid course ID." },
+      { status: 400 }
+    );
+  }
+
   try {
-    await connectToDatabase();
+    await dbConnect();
 
     const deletedCourse = await Course.findByIdAndDelete(id);
 
@@ -84,6 +98,7 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({
       success: true,
       message: "Course deleted successfully",
+      course: deletedCourse,
     });
   } catch (error) {
     console.error(error);
@@ -97,3 +112,4 @@ export async function DELETE(request, { params }) {
     );
   }
 }
+

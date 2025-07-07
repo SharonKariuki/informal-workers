@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+// import React, { useState, useEffect } from 'react';
 import ArticlesSection from '../components/sections/ArticlesSection';
 import { motion } from "framer-motion";
 import Image from 'next/image';
@@ -14,7 +15,7 @@ export default function Home() {
       items: [
         "Access thousands of vetted job opportunities",
         "Create a professional profile in minutes",
-        "Get matched with relevant jobs using AI",
+        "Get matched with relevant jobs using inn seconds",
         "Receive real-time application updates"
       ]
     },
@@ -24,17 +25,17 @@ export default function Home() {
       items: [
         "Post jobs in under 2 minutes",
         "Access pre-qualified candidates",
-        "AI-powered candidate matching",
+        "Automatic candidate matching",
         "Comprehensive hiring analytics"
       ]
     }
   ];
 
   const stats = [
-    { value: "10,000+", label: "Active Jobs" },
-    { value: "50,000+", label: "Happy Members" },
+    { value: "2", label: "Active Jobs" },
+    { value: "2+", label: "Happy Members" },
     { value: "95%", label: "Satisfaction Rate" },
-    { value: "24h", label: "Avg. Response Time" }
+    { value: "10Mins", label: "Avg. Response Time" }
   ];
 
   const quickLinks = [
@@ -62,7 +63,7 @@ export default function Home() {
     {
       icon: <FaRocket className="text-blue-400 text-2xl" />,
       title: "Fast Matching",
-      description: "Our AI connects you with ideal opportunities in seconds"
+      description: "Our platform connects you with ideal opportunities in seconds"
     },
     {
       icon: <FaChartLine className="text-indigo-400 text-2xl" />,
@@ -84,16 +85,18 @@ export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-900 to-indigo-900 text-white overflow-hidden">
+     <section className="relative bg-gradient-to-br from-blue-900 to-indigo-900 text-white overflow-hidden">
+        {/* Background layers */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-          <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10"></div>
-          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-indigo-800/30 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 w-1/3 h-full bg-gradient-to-r from-blue-800/20 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-indigo-800/30 to-transparent" />
+          <div className="absolute bottom-0 left-0 w-1/3 h-full bg-gradient-to-r from-blue-800/20 to-transparent" />
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+            {/* Left Hero Content */}
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -107,39 +110,24 @@ export default function Home() {
                 The premier platform connecting exceptional talent with visionary companies through intelligent matching.
               </p>
               <div className="flex flex-wrap gap-4">
-                <motion.div 
-                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.4)" }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <Link
-                    href="/auth/register?role=worker"
-                    className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
-                  >
+                {/* Worker Signup Button */}
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                  <Link href="/signup?role=worker" className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg flex items-center gap-2">
                     Find Your Dream Job
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor"><path fillRule="evenodd" d="M10.293 5.293a1 1 ..."/></svg>
                   </Link>
                 </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(124, 58, 237, 0.4)" }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  <Link
-                    href="/auth/register?role=employer"
-                    className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
-                  >
+                {/* Employer Signup Button */}
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+                  <Link href="/signup?role=employer" className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg flex items-center gap-2">
                     Hire Top Talent
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.973 5.973 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor"><path d="M13 6a3 ..."/></svg>
                   </Link>
                 </motion.div>
               </div>
             </motion.div>
 
+<<<<<<< HEAD
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -155,19 +143,34 @@ export default function Home() {
                   className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                   priority
                 />
+=======
+            {/* Hero Image */}
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className="md:w-1/2 relative">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-white/10 perspective-1000">
+                <Image src="/images/business-people-working-together.jpg" alt="Team working" width={600} height={400} className="w-full h-auto object-cover" priority />
+>>>>>>> 1e4ac84 (initial commit)
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                  <motion.p 
-                    className="text-white/90 font-light italic"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                  >
+                  <motion.p className="text-white/90 italic" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                     "This platform helped us find the perfect candidate in just 3 days!" — Sarah, HR Director
                   </motion.p>
                 </div>
               </div>
             </motion.div>
           </div>
+
+          {/* ➖ Add banners right below hero */}
+          {/* {banners.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-12">
+              {banners.map((banner) => (
+                <motion.div key={banner._id} whileHover={{ scale: 1.03 }} className="bg-white/10 backdrop-blur-md p-4 rounded-lg shadow-md">
+                  <Link href={banner.link || '#'} className="block">
+                    <img src={banner.imageUrl} alt={banner.title} className="rounded-md object-cover w-full h-40" />
+                    <h3 className="text-white mt-3 text-lg font-semibold">{banner.title}</h3>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )} */}
         </div>
       </section>
 
@@ -457,7 +460,7 @@ export default function Home() {
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
                 <Link
-                  href="/auth/register?role=worker"
+                  href="/signup?role=worker"
                   className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white px-10 py-5 rounded-xl font-semibold text-lg transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center gap-3"
                 >
                   Get Started Now
@@ -472,7 +475,7 @@ export default function Home() {
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
                 <Link
-                  href="/auth/register?role=employer"
+                  href="/signup?role=employer"
                   className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-10 py-5 rounded-xl font-semibold text-lg transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center gap-3"
                 >
                   Find Talent

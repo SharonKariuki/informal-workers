@@ -1,43 +1,29 @@
-// Lib/mongoose.js
-
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGO_URI;
 
 if (!MONGODB_URI) {
-  throw new Error(
-    "Please define the MONGODB_URI environment variable in .env.local"
-  );
+  throw new Error("⚠️ Please define the MONGO_URI environment variable inside .env");
 }
 
-// Global is used here to maintain a cached connection
-// across hot reloads in development. Otherwise, many
-// connections can be created and cause errors.
-
-let cached = global._mongoose;
+let cached = global.mongoose;
 
 if (!cached) {
-  cached = global._mongoose = { conn: null, promise: null };
+  cached = global.mongoose = { conn: null, promise: null };
 }
 
-export async function connectToDatabase() {
-  if (cached.conn) {
-    return cached.conn;
-  }
+async function dbConnect() {
+  if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
-      dbName: "kazi_link",
-      bufferCommands: false,
-    }).then((mongoose) => {
-      console.log("✅ MongoDB connected");
-      return mongoose;
-    }).catch((error) => {
-      console.error("❌ MongoDB connection error:", error);
-      throw error;
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
     });
   }
 
   cached.conn = await cached.promise;
   return cached.conn;
 }
+
+export default dbConnect;
