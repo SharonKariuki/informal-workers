@@ -426,15 +426,7 @@ setPostedJobs(jobsData.data); // ✅ only set the array part
                     {postedJobs.length} total
                   </span>
                   <Link href="/jobs/post">
-                    <button 
-                      disabled={!(profile?.profileApproved)}
-                      className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium shadow-sm transition-colors duration-300 ${profile?.status === 'approved' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      Post New Job
-                    </button>
+                  
                   </Link>
                 </div>
               </div>

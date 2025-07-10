@@ -1,41 +1,59 @@
-const fs = require('fs');
-const axios = require('axios');
-const FormData = require('form-data');
-const Worker = require('../models/Worker');
+const fs = require("fs");
+const Worker = require("../models/Worker");
+const User = require("../models/User");
 
+/**
+ * @desc    Submit KYC documents for manual admin review
+ * @route   POST /api/kyc/submit?userId=...
+ * @access  Private (after signup)
+ */
 exports.submitKYC = async (req, res) => {
   const { userId } = req.query;
-  const selfie = req.files.selfie[0];
-  const idDoc = req.files.idDoc[0];
+  const selfie = req.files?.selfie?.[0];
+  const idFront = req.files?.idFront?.[0];
+  const idBack = req.files?.idBack?.[0];
+
+  if (!userId) {
+    return res.status(400).json({ success: false, message: "Missing userId in query." });
+  }
+
+  if (!selfie || !idFront) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing required KYC files: selfie and ID front are required.",
+    });
+  }
 
   try {
-    const formData = new FormData();
-    formData.append("photo", fs.createReadStream(selfie.path));
-    formData.append("document_primary", fs.createReadStream(idDoc.path));
-    formData.append("apikey", process.env.ID_ANALYZER_API_KEY);
-
-    const response = await axios.post(
-      "https://api.idanalyzer.com/v3/identity/verify",
-      formData,
-      { headers: formData.getHeaders() }
-    );
-
-    const result = response.data;
-
-    const worker = await Worker.findOneAndUpdate(
+    // Update Worker document
+    const updatedWorker = await Worker.findOneAndUpdate(
       { user: userId },
       {
-        selfiePath: selfie.path,
-        idDocPath: idDoc.path,
-        kycStatus: result.result === 1 ? "pending" : "rejected", // ✅ FIXED
-        kycResult: result,
+        selfie: selfie.filename,
+        idFront: idFront.filename,
+        idBack: idBack?.filename || '',
+        kycStatus: "pending",
+        submittedAt: new Date(),
       },
-      { new: true }
+      { new: true, upsert: false }
     );
 
-    res.status(200).json({ success: true, result, worker });
+    // Optionally mark the user as having started KYC (no approval)
+    await User.findByIdAndUpdate(userId, {
+      profileApproved: false,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "KYC documents submitted successfully. Awaiting admin review.",
+      worker: updatedWorker,
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "KYC failed", error: err.message });
+    console.error("Manual KYC submission error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error during KYC submission.",
+      error: err.message,
+    });
   }
 };

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Menu,
   X,
@@ -13,48 +13,48 @@ import {
   Home,
   Phone,
   Shield,
-} from 'lucide-react';
+  Bell,
+  Users,
+  FolderKanban,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const router = useRouter();
+
+  // Check auth state on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("jwt");
+    localStorage.removeItem("user");
+    setUser(null);
+    router.push("/");
+  };
 
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const toggleSearch = () => setSearchOpen((prev) => !prev);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-
-    const userJson = localStorage.getItem('kazilinkUser');
-    if (userJson) {
-      setUser(JSON.parse(userJson));
-    }
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const profileLink =
-    user?.role === 'employer'
-      ? '/employer/dashboard'
-      : user?.role === 'worker'
-      ? '/worker/dashboard'
-      : '#';
 
   return (
     <nav
       className={`fixed w-full z-50 transition-all duration-300 ${
         scrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-sm'
-          : 'bg-white/90 backdrop-blur-sm'
+          ? "bg-white/95 backdrop-blur-md shadow-sm"
+          : "bg-white/90 backdrop-blur-sm"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
+          {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
             <span className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-500 rounded-lg flex items-center justify-center">
               <Briefcase className="w-4 h-4 text-white" />
@@ -64,42 +64,8 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Nav */}
+          {/* Desktop nav links */}
           <div className="hidden lg:flex items-center space-x-8">
-<<<<<<< HEAD
-            {/* Links */}
-            <div className="flex space-x-8">
-              <NavItem href="/" label="Home" icon={<Home size={18} />} />
-              <NavItem href="/contact" label="Contact" icon={<Phone size={18} />} />
-            </div>
-
-            {/* Search button */}
-            <button
-              onClick={toggleSearch}
-              className="ml-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              aria-label="Search"
-            >
-              <Search className="w-5 h-5 text-gray-600" />
-            </button>
-
-            {/* Auth buttons */}
-            <div className="flex items-center space-x-4 ml-6">
-              <Link
-                href="/signin"
-                className="flex items-center space-x-1.5 text-gray-700 hover:text-indigo-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50"
-              >
-                <LogIn className="w-4 h-4" />
-                <span className="font-medium">Login</span>
-              </Link>
-              <Link
-                href="/signup"
-                className="bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex items-center space-x-1.5 shadow-md hover:shadow-indigo-200"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>Register</span>
-              </Link>
-            </div>
-=======
             <NavItem href="/" label="Home" icon={<Home size={18} />} />
             {user?.isLoggedIn && (
               <>
@@ -137,21 +103,40 @@ export default function Navbar() {
                   <span>Register</span>
                 </Link>
               </div>
+            ) : (
+              <div className="flex items-center space-x-5 ml-6">
+                <Link
+                  href="/notifications"
+                  className="relative text-gray-600 hover:text-indigo-600"
+                >
+                  <Bell className="w-5 h-5" />
+                </Link>
+                <Link
+                  href="/profile"
+                  className="text-gray-600 hover:text-indigo-600"
+                >
+                  <User className="w-6 h-6" />
+                </Link>
+                <button
+                  onClick={logout}
+                  className="text-gray-600 hover:text-red-600 text-sm font-medium ml-4"
+                >
+                  Logout
+                </button>
+              </div>
             )}
 >>>>>>> 1e4ac84 (initial commit)
           </div>
 
-          {/* Mobile Menu Buttons */}
+          {/* Mobile menu buttons */}
           <div className="flex lg:hidden items-center space-x-4">
-            {user?.isLoggedIn && (
-              <button
-                onClick={toggleSearch}
-                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                aria-label="Search"
-              >
-                <Search className="w-5 h-5 text-gray-600" />
-              </button>
-            )}
+            <button
+              onClick={toggleSearch}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5 text-gray-600" />
+            </button>
             <button
               onClick={toggleMenu}
               className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -166,8 +151,8 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
-        {user?.isLoggedIn && (searchOpen || menuOpen) && (
+        {/* Mobile search bar */}
+        {(searchOpen || menuOpen) && (
           <div className="lg:hidden mt-2 pb-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
@@ -180,42 +165,63 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Mobile Menu Links */}
+        {/* Mobile nav links */}
         {menuOpen && (
           <div className="lg:hidden mt-2 space-y-3 pb-6">
             <MobileNavItem href="/" label="Home" icon={<Home size={18} />} onClick={toggleMenu} />
-<<<<<<< HEAD
-            <MobileNavItem href="/benefits" label="Benefits" icon={<Shield size={18} />} onClick={toggleMenu} />
-            <MobileNavItem href="/contact" label="Contact" icon={<Phone size={18} />} onClick={toggleMenu} />
-            <div className="pt-2 space-y-3 border-t border-gray-100 mt-2">
-              <MobileNavItem href="/signin" label="Login" icon={<LogIn size={18} />} onClick={toggleMenu} />
-              <Link
-                href="/signup"
-                className="flex items-center space-x-2 justify-center bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity shadow-md"
-                onClick={toggleMenu}
-              >
-                <UserPlus className="w-5 h-5" />
-                <span>Register</span>
-              </Link>
-            </div>
-=======
             {user?.isLoggedIn ? (
               <>
-                <MobileNavItem href="/contact" label="Contact" icon={<Phone size={18} />} onClick={toggleMenu} />
-                <MobileNavItem href={profileLink} label="Profile" icon={<User size={18} />} onClick={toggleMenu} />
+                <MobileNavItem
+                  href="/jobs"
+                  label="All Jobs"
+                  icon={<Briefcase size={18} />}
+                  onClick={toggleMenu}
+                />
+                <MobileNavItem
+                  href="/workers"
+                  label="All Workers"
+                  icon={<Users size={18} />}
+                  onClick={toggleMenu}
+                />
+                <MobileNavItem
+                  href="/notifications"
+                  label="Notifications"
+                  icon={<Bell size={18} />}
+                  onClick={toggleMenu}
+                />
+                <MobileNavItem
+                  href="/profile"
+                  label="Profile"
+                  icon={<User size={18} />}
+                  onClick={toggleMenu}
+                />
+                <button
+                  onClick={() => {
+                    logout();
+                    toggleMenu();
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-red-600 hover:bg-gray-50 transition-colors"
+                >
+                  Logout
+                </button>
               </>
             ) : (
-              <div className="pt-2 space-y-3 border-t border-gray-100 mt-2">
-                <MobileNavItem href="/signin" label="Login" icon={<LogIn size={18} />} onClick={toggleMenu} />
+              <>
+                <MobileNavItem
+                  href="/signin"
+                  label="Login"
+                  icon={<LogIn size={18} />}
+                  onClick={toggleMenu}
+                />
                 <Link
                   href="/signup"
-                  className="flex items-center space-x-2 justify-center bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity shadow-md"
                   onClick={toggleMenu}
+                  className="flex items-center space-x-2 justify-center bg-gradient-to-r from-indigo-600 to-purple-500 text-white px-4 py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity shadow-md"
                 >
                   <UserPlus className="w-5 h-5" />
                   <span>Register</span>
                 </Link>
-              </div>
+              </>
             )}
 >>>>>>> 1e4ac84 (initial commit)
           </div>
@@ -223,11 +229,7 @@ export default function Navbar() {
       </div>
 
       {/* Desktop Search Panel */}
-<<<<<<< HEAD
-      {searchOpen && (
-=======
       {user?.isLoggedIn && searchOpen && (
->>>>>>> 1e4ac84 (initial commit)
         <div className="hidden lg:block absolute top-20 left-0 w-full bg-white shadow-md py-4 px-6 border-t border-gray-100">
           <div className="max-w-7xl mx-auto relative">
             <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
@@ -250,7 +252,7 @@ export default function Navbar() {
   );
 }
 
-// Reusable Nav Item for desktop
+// Desktop Nav item
 function NavItem({ href, label, icon }) {
   return (
     <Link
@@ -264,7 +266,7 @@ function NavItem({ href, label, icon }) {
   );
 }
 
-// Reusable Nav Item for mobile
+// Mobile Nav item
 function MobileNavItem({ href, label, icon, onClick }) {
   return (
     <Link
@@ -276,4 +278,4 @@ function MobileNavItem({ href, label, icon, onClick }) {
       <span className="font-medium">{label}</span>
     </Link>
   );
-}
+} 

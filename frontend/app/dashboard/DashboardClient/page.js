@@ -102,8 +102,6 @@ export default function DashboardClient() {
         reviewsRes.json(),
         bannersRes.json(),
       ]);
-      console.log("KYC Data:", kycData);
-
 
       setData({ stats, users, kycData, jobs, reviews, banners });
     } catch (error) {

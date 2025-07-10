@@ -16,6 +16,67 @@ import {
 } from '@/components/forms';
 import { useRegistrationForm } from '@/hooks/useWorkerRegistrationForm';
 
+function LocationAutocomplete({ setFormData }) {
+  const [value, setValue] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+
+  const handleInputChange = async (e) => {
+    const query = e.target.value;
+    setValue(query);
+    if (query.length < 3) return;
+
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1`
+      );
+      const data = await res.json();
+      setSuggestions(data);
+    } catch (error) {
+      console.error('Error fetching address suggestions:', error);
+    }
+  };
+
+  const handleSelect = (place) => {
+    setValue(place.display_name);
+    setSuggestions([]);
+    setFormData((prev) => ({
+      ...prev,
+      street: place.display_name,
+      city: place.address?.city || '',
+      state: place.address?.state || '',
+      country: place.address?.country || '',
+      latitude: place.lat,
+      longitude: place.lon,
+    }));
+  };
+
+  return (
+    <Section title="Address Information" icon="📍">
+      <div className="mb-4">
+        <input
+          value={value}
+          onChange={handleInputChange}
+          placeholder="Start typing your address..."
+          className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
+        />
+        {suggestions.length > 0 && (
+          <ul className="bg-white border mt-2 rounded shadow text-black max-h-60 overflow-y-auto">
+            {suggestions.map((place) => (
+              <li
+                key={place.place_id}
+                onClick={() => handleSelect(place)}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
+                {place.display_name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Section>
+  );
+}
+
 export default function WorkerRegistrationForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -48,6 +109,8 @@ export default function WorkerRegistrationForm() {
     state: '',
     zip: '',
     country: '',
+    latitude: '',
+    longitude: '',
     occupation: '',
     experience: '',
     education: '',
@@ -111,7 +174,9 @@ export default function WorkerRegistrationForm() {
 
       const data = new FormData();
       for (const key in formData) {
-        if (formData[key]) data.append(key, formData[key]);
+        if (formData[key] !== undefined && formData[key] !== null) {
+          data.append(key, formData[key]);
+        }
       }
       data.append('skills', JSON.stringify(skills));
       data.append('role', 'worker');
@@ -212,54 +277,52 @@ export default function WorkerRegistrationForm() {
       </Section>
 
       {/* Address Info Section */}
-      <Section title="Address Information" icon="📍">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            name="street"
-            value={formData.street}
-            onChange={handleChange}
-            placeholder="Street Address*"
-            error={errors.street}
-            icon="location"
-          />
-          <FormInput
-            name="city"
-            value={formData.city}
-            onChange={handleChange}
-            placeholder="City*"
-            error={errors.city}
-            icon="city"
-          />
-          <FormInput
-            name="state"
-            value={formData.state}
-            onChange={handleChange}
-            placeholder="State/Province*"
-            error={errors.state}
-            icon="region"
-          />
-          <FormInput
-            name="zip"
-            value={formData.zip}
-            onChange={handleChange}
-            placeholder="Zip/Postal Code*"
-            error={errors.zip}
-            icon="zip"
-          />
-          <select
-            name="country"
-            value={formData.country}
-            onChange={handleChange}
-            className={`w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all
-              ${formData.country ? 'text-black' : 'text-gray-300'}`}
-          >
-            <option value="" disabled hidden>Country*</option>
-            <option value="kenya">Kenya</option>
-            <option value="uganda">Uganda</option>
-            <option value="tanzania">Tanzania</option>
-          </select>
-        </div>
-      </Section>
+     
+<Section title="Address Information" icon="📍">
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <FormInput
+      name="street"
+      value={formData.street}
+      onChange={handleChange}
+      placeholder="Street Address"
+      icon="location"
+      error={errors.street}
+    />
+    <FormInput
+      name="city"
+      value={formData.city}
+      onChange={handleChange}
+      placeholder="City*"
+      icon="city"
+      error={errors.city}
+    />
+    <FormInput
+      name="state"
+      value={formData.state}
+      onChange={handleChange}
+      placeholder="State / Province"
+      icon="flag"
+      error={errors.state}
+    />
+    <FormInput
+      name="zip"
+      value={formData.zip}
+      onChange={handleChange}
+      placeholder="ZIP / Postal Code"
+      icon="map"
+      error={errors.zip}
+    />
+    <FormInput
+      name="country"
+      value={formData.country}
+      onChange={handleChange}
+      placeholder="Country*"
+      icon="globe"
+      error={errors.country}
+    />
+  </div>
+</Section>
+
 
       {/* Work Info Section */}
       <Section title="Work Information" icon="💼">
@@ -427,7 +490,7 @@ export default function WorkerRegistrationForm() {
       {/* ID Verification Section */}
       <Section title="ID Verification" icon="🪪">
         <p className="mb-4 text-sm text-gray-600">
-          Upload both sides of your government-issued ID and a selfie holding your ID.
+          Upload both sides of your government-issued ID and your selfie .
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FileUpload
@@ -453,7 +516,7 @@ export default function WorkerRegistrationForm() {
           {renderFilePreview(formData.idBack, true)}
 
           <FileUpload
-            label="Selfie Holding Your ID*"
+            label="Selfie*"
             side="selfie"
             onChange={(e) => handleFileChange(e, 'selfie')}
             isHovered={hoveredUpload === 'selfie'}
@@ -519,7 +582,7 @@ export default function WorkerRegistrationForm() {
             name="consent"
             checked={formData.consent}
             onChange={handleChange}
-            label="I agree to the Terms of Service and Privacy Policy."
+            label="I agree to the collection and processing of my personal data for verification and background checks."
             error={errors.consent}
           />
         </div>

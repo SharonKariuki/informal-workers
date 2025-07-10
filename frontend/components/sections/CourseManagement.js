@@ -8,14 +8,18 @@ export default function CourseManagement({ initialCourses }) {
   const [courses, setCourses] = useState(initialCourses || []);
 
   const [editingId, setEditingId] = useState(null);
-  const [editedTitle, setEditedTitle] = useState('');
-  const [editedDescription, setEditedDescription] = useState('');
+  const [editedTitle, setEditedTitle] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
   const [newCourse, setNewCourse] = useState({
-    title: '',
-    description: '',
+    title: "",
+    description: "",
     published: false,
+    externalUrl: "",
   });
+
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     fetchCourses();
@@ -37,10 +41,20 @@ export default function CourseManagement({ initialCourses }) {
 
   const handleAddSubmit = async () => {
     try {
-      const res = await fetch("/api/courses", {
+      const formData = new FormData();
+      formData.append("title", newCourse.title);
+      formData.append("description", newCourse.description);
+      formData.append("published", newCourse.published.toString()); // ✅ fix here!
+      if (newCourse.externalUrl) {
+        formData.append("externalUrl", newCourse.externalUrl);
+      }
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
+
+      const res = await fetch("http://localhost:5000/api/courses", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newCourse),
+        body: formData,
       });
 
       if (!res.ok) {
@@ -54,10 +68,12 @@ export default function CourseManagement({ initialCourses }) {
 
     setIsAdding(false);
     setNewCourse({
-      title: '',
-      description: '',
+      title: "",
+      description: "",
       published: false,
+      externalUrl: "",
     });
+    setSelectedFile(null);
 
     fetchCourses();
   };
@@ -126,25 +142,24 @@ export default function CourseManagement({ initialCourses }) {
   };
 
   const handleDelete = async (courseId) => {
-  console.log("Deleting course ID:", courseId);
+    console.log("Deleting course ID:", courseId);
 
-  try {
-    const res = await fetch(`/api/courses/${courseId}`, {
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch(`/api/courses/${courseId}`, {
+        method: "DELETE",
+      });
 
-    if (!res.ok) {
-      console.error("Error deleting course:", res.statusText);
-    } else {
-      console.log("Course deleted successfully");
+      if (!res.ok) {
+        console.error("Error deleting course:", res.statusText);
+      } else {
+        console.log("Course deleted successfully");
+      }
+    } catch (err) {
+      console.error("Error deleting course:", err);
     }
-  } catch (err) {
-    console.error("Error deleting course:", err);
-  }
 
-  fetchCourses();
-};
-
+    fetchCourses();
+  };
 
   return (
     <div className="space-y-6">
@@ -160,10 +175,14 @@ export default function CourseManagement({ initialCourses }) {
 
       {isAdding && (
         <div className="border border-indigo-100 rounded-lg p-6 bg-white shadow-sm">
-          <h3 className="font-semibold mb-4 text-lg text-gray-900">Add New Course</h3>
+          <h3 className="font-semibold mb-4 text-lg text-gray-900">
+            Add New Course
+          </h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Title
+              </label>
               <input
                 type="text"
                 value={newCourse.title}
@@ -188,6 +207,39 @@ export default function CourseManagement({ initialCourses }) {
                 rows="3"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                External URL
+              </label>
+              <input
+                type="url"
+                value={newCourse.externalUrl}
+                onChange={(e) =>
+                  setNewCourse({ ...newCourse, externalUrl: e.target.value })
+                }
+                className="w-full p-2 border border-indigo-200 rounded text-gray-900"
+                placeholder="https://example.com/course"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Upload PDF
+              </label>
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+                className="w-full text-gray-700"
+              />
+              {selectedFile && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Selected file: {selectedFile.name}
+                </p>
+              )}
+            </div>
+
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -260,6 +312,26 @@ export default function CourseManagement({ initialCourses }) {
                 <p className="text-sm text-gray-800 mb-3 line-clamp-3">
                   {course.description}
                 </p>
+                {course.externalUrl && (
+                  <a
+                    href={course.externalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-indigo-700 text-sm hover:underline block mb-2"
+                  >
+                    View External Resource
+                  </a>
+                )}
+                {course.fileUrl && (
+                  <a
+                    href={course.fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-green-700 text-sm hover:underline block mb-2"
+                  >
+                    View PDF
+                  </a>
+                )}
               </div>
             )}
 
@@ -331,3 +403,4 @@ export default function CourseManagement({ initialCourses }) {
     </div>
   );
 }
+

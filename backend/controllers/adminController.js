@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-
 const Admin = require("../models/Admin");
 const User = require("../models/User");
 const Worker = require("../models/Worker");
@@ -9,7 +8,9 @@ const Job = require("../models/jobModels");
 const Review = require("../models/Review");
 const Banner = require("../models/Banner");
 
-// 🔐 Generate JWT
+/* ---------------------------------- Auth ---------------------------------- */
+
+// 🔐 Generate Admin JWT
 const signAdminToken = (admin) => {
   return jwt.sign(
     {
@@ -54,7 +55,9 @@ exports.adminSignin = async (req, res) => {
   }
 };
 
-// 📋 Get all users
+/* ---------------------------------- Users ---------------------------------- */
+
+// 📋 Get all users with related profiles
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find()
@@ -63,11 +66,115 @@ exports.getAllUsers = async (req, res) => {
     res.status(200).json(users);
   } catch (err) {
     console.error("Error fetching users:", err);
-    res.status(500).json({ error: "Failed to fetch users" });
+    res.status(500).json({ message: "Failed to fetch users" });
   }
 };
 
-// 📊 Dashboard stats
+// 🕵️ Get users with incomplete or unapproved profiles
+exports.getPendingUsers = async (req, res) => {
+  try {
+    const pendingUsers = await User.find({ profileApproved: false })
+      .populate("worker", "-__v")
+      .populate("employer", "-__v");
+    res.status(200).json(pendingUsers);
+  } catch (err) {
+    console.error("Error fetching pending users:", err);
+    res.status(500).json({ message: "Failed to fetch pending users" });
+  }
+};
+
+// ✅ Approve or reject user profile
+exports.updateUserStatus = async (req, res) => {
+  const { id } = req.params;
+  const { profileApproved } = req.body;
+
+  if (typeof profileApproved !== "boolean") {
+    return res.status(400).json({ message: "'profileApproved' must be a boolean." });
+  }
+
+  try {
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    if (user.role === "worker") {
+      await Worker.findOneAndUpdate({ user: id }, { profileApproved });
+    } else if (user.role === "employer") {
+      await Employer.findOneAndUpdate({ user: id }, { profileApproved });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      {
+        profileApproved,
+        isProfileComplete: profileApproved,
+      },
+      { new: true }
+    ).populate("worker").populate("employer");
+
+    res.status(200).json({
+      message: `User profile ${profileApproved ? "approved" : "rejected"} successfully.`,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user status:", error);
+    res.status(500).json({ message: "Failed to update user status." });
+  }
+};
+
+/* ----------------------------------- KYC ---------------------------------- */
+
+// 📄 Get workers with pending KYC
+exports.getPendingKYC = async (req, res) => {
+  try {
+    const pending = await Worker.find({ kycStatus: "pending" })
+      .select("firstName lastName email phone selfie idFront idBack submittedAt user")
+      .populate("user", "email");
+
+    res.status(200).json(pending);
+  } catch (error) {
+    console.error("Error fetching pending KYC workers:", error);
+    res.status(500).json({ message: "Failed to fetch KYC data" });
+  }
+};
+
+// ✅ Approve or reject worker KYC
+exports.updateKYCStatus = async (req, res) => {
+  const { id } = req.params;
+  const { action } = req.body;
+
+  if (!["approve", "reject"].includes(action)) {
+    return res.status(400).json({ message: "Invalid action. Must be 'approve' or 'reject'." });
+  }
+
+  const kycStatus = action === "approve" ? "verified" : "rejected";
+  const profileApproved = action === "approve";
+
+  try {
+    const worker = await Worker.findByIdAndUpdate(
+      id,
+      { kycStatus, profileApproved },
+      { new: true }
+    );
+    if (!worker) return res.status(404).json({ message: "Worker not found." });
+
+    await User.findByIdAndUpdate(worker.user, {
+      profileApproved,
+      isProfileComplete: profileApproved,
+    });
+
+    res.status(200).json({
+      message: `KYC ${kycStatus} successfully.`,
+      worker,
+    });
+  } catch (err) {
+    console.error("Error updating KYC status:", err);
+    res.status(500).json({ message: "Failed to update KYC status" });
+  }
+};
+
+/* ---------------------------------- Stats --------------------------------- */
+
+// 📊 Dashboard Stats
 exports.getStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -75,173 +182,95 @@ exports.getStats = async (req, res) => {
     const employers = await Employer.countDocuments();
     const verifiedWorkers = await Worker.countDocuments({ kycStatus: "verified" });
     const jobs = await Job.countDocuments();
+    const pendingKYC = await Worker.countDocuments({ kycStatus: "pending" });
+    const activeJobs = await Job.countDocuments({ status: "active" });
 
-    res.status(200).json({ totalUsers, workers, employers, verifiedWorkers, jobs });
+    res.status(200).json({ totalUsers, workers, employers, verifiedWorkers, jobs, activeJobs, pendingKYC });
   } catch (err) {
     console.error("Error fetching stats:", err);
-    res.status(500).json({ error: "Failed to fetch stats" });
+    res.status(500).json({ message: "Failed to fetch stats" });
   }
 };
 
-// 🕵️ Workers with pending KYC
-exports.getPendingKYC = async (req, res) => {
-  try {
-    const pending = await Worker.find({ kycStatus: "pending" }).select("-__v");
-    res.status(200).json(pending);
-  } catch (error) {
-    console.error("Error fetching KYC:", error);
-    res.status(500).json({ error: "Failed to fetch KYC data" });
-  }
-};
+/* ------------------------------ Jobs Management ---------------------------- */
 
-// ✅ Update KYC Status
-exports.updateKYCStatus = async (req, res) => {
-  const { id } = req.params;
-  const { action } = req.body;
-
-  if (!["approve", "reject"].includes(action)) {
-    return res.status(400).json({ error: "Invalid action. Must be 'approve' or 'reject'." });
-  }
-
-  const status = action === "approve" ? "verified" : "rejected";
-
-  try {
-    const worker = await Worker.findByIdAndUpdate(id, { kycStatus: status }, { new: true });
-    if (!worker) {
-      return res.status(404).json({ error: "Worker not found." });
-    }
-    res.status(200).json(worker);
-  } catch (err) {
-    console.error("Error updating KYC status:", err);
-    res.status(500).json({ error: "Failed to update KYC status" });
-  }
-};
-
-// 📄 All Job Posts
+// 📄 Get all job posts
 exports.getJobPosts = async (req, res) => {
   try {
     const jobs = await Job.find();
     res.status(200).json(jobs);
   } catch (err) {
     console.error("Error fetching jobs:", err);
-    res.status(500).json({ error: "Failed to fetch jobs" });
+    res.status(500).json({ message: "Failed to fetch jobs" });
   }
 };
 
-// 🔄 Update Job Status
+// 🔄 Update job post status
 exports.updateJobStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
   try {
     const job = await Job.findByIdAndUpdate(id, { status }, { new: true });
-    if (!job) {
-      return res.status(404).json({ error: "Job not found." });
-    }
+    if (!job) return res.status(404).json({ message: "Job not found." });
+
     res.status(200).json(job);
   } catch (err) {
     console.error("Error updating job status:", err);
-    res.status(500).json({ error: "Failed to update job" });
+    res.status(500).json({ message: "Failed to update job" });
   }
 };
 
-// ⭐ Get All Reviews
+/* ------------------------------ Reviews Management ------------------------- */
+
+// ⭐ Get all reviews
 exports.getReviews = async (req, res) => {
   try {
     const reviews = await Review.find();
     res.status(200).json(reviews);
   } catch (err) {
     console.error("Error fetching reviews:", err);
-    res.status(500).json({ error: "Failed to fetch reviews" });
+    res.status(500).json({ message: "Failed to fetch reviews" });
   }
 };
 
-// ❌ Delete Review
+// ❌ Delete review
 exports.deleteReview = async (req, res) => {
   const { id } = req.params;
+
   try {
     const review = await Review.findByIdAndDelete(id);
-    if (!review) {
-      return res.status(404).json({ error: "Review not found." });
-    }
+    if (!review) return res.status(404).json({ message: "Review not found." });
+
     res.status(200).json({ message: "Review deleted" });
   } catch (err) {
     console.error("Error deleting review:", err);
-    res.status(500).json({ error: "Failed to delete review" });
+    res.status(500).json({ message: "Failed to delete review" });
   }
 };
 
-// 🖼️ Get All Banners
+/* ----------------------------- Banners Management -------------------------- */
+
+// 🖼️ Get all banners
 exports.getBanners = async (req, res) => {
   try {
     const banners = await Banner.find();
     res.status(200).json(banners);
   } catch (err) {
     console.error("Error fetching banners:", err);
-    res.status(500).json({ error: "Failed to fetch banners" });
+    res.status(500).json({ message: "Failed to fetch banners" });
   }
 };
 
-// ➕ Add Banner
+// ➕ Add new banner
 exports.addBanner = async (req, res) => {
   const { imageUrl, title, link } = req.body;
+
   try {
     const banner = await Banner.create({ imageUrl, title, link });
     res.status(201).json(banner);
   } catch (err) {
     console.error("Error adding banner:", err);
-    res.status(500).json({ error: "Failed to add banner" });
-  }
-};
-
-// ✅ Update User Approval Status
-
-// ✅ Update User Approval Status
-
-exports.updateUserStatus = async (req, res) => {
-  const { id } = req.params;
-  const { approved } = req.body;
-
-  console.log("📥 Incoming user status update:", { id, approved });
-
-  if (typeof approved !== "boolean") {
-    console.error("❌ Invalid 'approved' type:", typeof approved);
-    return res.status(400).json({ error: "'approved' must be a boolean (true or false)" });
-  }
-
-  try {
-    console.log("📥 Incoming user status update:", { id, approved });
-
-    const user = await User.findById(id);
-    if (!user) {
-      console.error("❌ User not found with ID:", id);
-      return res.status(404).json({ error: "User not found" });
-    }
-
-if (user.role === "worker" && user.worker) {
-  await Worker.findByIdAndUpdate(user.worker, { profileApproved: approved });
-} else if (user.role === "employer" && user.employer) {
-  await Employer.findByIdAndUpdate(user.employer, { profileApproved: approved });
-} else {
-  console.warn("Invalid role or missing profile link:", user);
-  return res.status(400).json({ error: "Invalid user role or missing profile reference." });
-}
-
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      {
-        profileApproved: approved,
-        isProfileComplete: approved,
-      },
-      { new: true }
-    ).populate("worker").populate("employer");
-
-    res.status(200).json({
-      message: `User profile ${approved ? "approved" : "rejected"} successfully.`,
-      user: updatedUser,
-    });
-  } catch (error) {
-    console.error("❌ Error in updateUserStatus handler:", error);
-    res.status(500).json({ error: error.message || "Failed to update user status" });
+    res.status(500).json({ message: "Failed to add banner" });
   }
 };

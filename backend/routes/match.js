@@ -1,31 +1,34 @@
 const express = require('express');
 const router = express.Router();
 const Worker = require('../models/Worker');
-const Job = require('../models/jobModels'); // Make sure this exists and is populated
+const Job = require('../models/jobModels');
 
+// ✅ Match jobs based on occupation and skill overlap
 router.get('/:workerId', async (req, res) => {
   try {
-    const { workerId } = req.params;
+    const worker = await Worker.findById(req.params.workerId);
+    if (!worker) {
+      return res.status(404).json({ message: 'Worker not found' });
+    }
 
-    // 1. Find the worker by ID
-    const worker = await Worker.findById(workerId);
-    if (!worker) return res.status(404).json({ message: 'Worker not found' });
-
-    // 2. Extract relevant matching fields
     const { occupation, skills } = worker;
 
-    // 3. Query jobs that match either occupation or at least one skill
+    if (!occupation || !skills || skills.length === 0) {
+      return res.status(400).json({ message: 'Worker occupation or skills are missing' });
+    }
+
+    // 🔍 Find jobs where:
+    // - jobTitle matches worker's occupation
+    // - at least one job skill is in worker's skills
     const matchedJobs = await Job.find({
-      $or: [
-        { occupation: { $regex: occupation, $options: 'i' } },
-        { requiredSkills: { $in: skills } } // `requiredSkills` must be array in Job model
-      ]
+      jobTitle: occupation,
+      skills: { $in: skills }
     });
 
-    res.status(200).json(matchedJobs);
-  } catch (error) {
-    console.error('Error matching jobs:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(200).json({ jobs: matchedJobs });
+  } catch (err) {
+    console.error('Job matching error:', err);
+    res.status(500).json({ message: 'Server error while matching jobs' });
   }
 });
 

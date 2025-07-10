@@ -99,25 +99,14 @@ export default function SignUpPage() {
 
   const form = (
     <form onSubmit={handleSubmit} autoComplete="off">
-      {/* Google Sign Up */}
-      <div className="mb-8">
-        <button
-          type="button"
-          className="w-full flex items-center justify-center space-x-3 py-3.5 px-6 border border-blue-200 rounded-xl bg-white shadow-sm hover:shadow-md transition duration-300"
-        >
-          <FaGoogle className="text-[#EA4335] text-xl" />
-          <span className="text-sm font-medium text-gray-700">Sign up with Google</span>
-        </button>
-      </div>
+     
 
       <div className="relative mb-8">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-blue-100"></div>
         </div>
         <div className="relative flex justify-center">
-          <span className="px-3 bg-white text-sm text-blue-500 font-medium">
-            or sign up with email
-          </span>
+          
         </div>
       </div>
 

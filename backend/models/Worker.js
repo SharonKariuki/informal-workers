@@ -1,3 +1,4 @@
+//file: backend/models/Worker.js
 const mongoose = require('mongoose');
 
 const addressSchema = new mongoose.Schema({
@@ -69,4 +70,4 @@ const workerSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Worker', workerSchema);
+module.exports = mongoose.model('Worker', workerSchema); 

@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React,{useState,useEffect} from 'react';
 // import React, { useState, useEffect } from 'react';
 import ArticlesSection from '../components/sections/ArticlesSection';
 import { motion } from "framer-motion";
@@ -8,6 +8,19 @@ import Link from 'next/link';
 import { FaUserTie, FaUsers, FaFileAlt, FaMoneyBillWave, FaCalculator, FaRocket, FaChartLine, FaHandshake, FaLightbulb } from "react-icons/fa";
 
 export default function Home() {
+  const[activeJobs, setActiveJobs] = useState(null);
+  const[totalUsers, setTotalUsers] = useState(null);
+   useEffect(() => {
+    fetch('/api/stats/jobs/active')
+      .then(res => res.json())
+      .then(data => setActiveJobs(data.count))
+      .catch(console.error);
+
+    fetch('/api/stats/users/active')
+      .then(res => res.json())
+      .then(data => setTotalUsers(data.count))
+      .catch(console.error);
+  }, []);
   const benefits = [
     {
       title: "For Job Seekers",
@@ -31,12 +44,7 @@ export default function Home() {
     }
   ];
 
-  const stats = [
-    { value: "2", label: "Active Jobs" },
-    { value: "2+", label: "Happy Members" },
-    { value: "95%", label: "Satisfaction Rate" },
-    { value: "10Mins", label: "Avg. Response Time" }
-  ];
+  
 
   const quickLinks = [
     {
@@ -174,44 +182,44 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Dynamic Stats Section */}
       <section className="py-20 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.8, staggerChildren: 0.1 }}
+            transition={{ duration: 0.8 }}
             viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
           >
-            {stats.map((stat, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  duration: 0.6, 
-                  delay: index * 0.1,
-                  type: "spring",
-                  stiffness: 100,
-                  damping: 10
-                }}
-                whileHover={{ 
-                  y: -10,
-                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-                }}
-                className="p-8 bg-white rounded-xl border border-blue-100 hover:border-blue-200 transition-all duration-300 hover:-translate-y-2 shadow-sm hover:shadow-md"
-              >
-                <p className="text-4xl font-bold text-indigo-900 mb-2 font-serif">{stat.value}</p>
-                <p className="text-blue-700 font-medium">{stat.label}</p>
-              </motion.div>
-            ))}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="p-8 bg-white rounded-xl border border-blue-100 hover:border-blue-200 transition-all duration-300 hover:-translate-y-2 shadow-sm hover:shadow-md"
+            >
+              <p className="text-4xl font-bold text-indigo-900 mb-2 font-serif">
+                {activeJobs !== null ? activeJobs : '...'}
+              </p>
+              <p className="text-blue-700 font-medium">Active Jobs</p>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="p-8 bg-white rounded-xl border border-blue-100 hover:border-blue-200 transition-all duration-300 hover:-translate-y-2 shadow-sm hover:shadow-md"
+            >
+              <p className="text-4xl font-bold text-indigo-900 mb-2 font-serif">
+                {totalUsers !== null ? totalUsers : '...'}
+              </p>
+              <p className="text-blue-700 font-medium">Active Users</p>
+            </motion.div>
           </motion.div>
         </div>
       </section>
-
       {/* Benefits Section */}
-      <section className="py-24 bg-gradient-to-b from-indigo-50 to-white">
+      <section id="benefits" className="py-24 bg-gradient-to-b from-indigo-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -359,7 +367,7 @@ export default function Home() {
       </section>
 
       {/* Resources Section */}
-      <section className="py-24 bg-gradient-to-b from-indigo-50 to-white">
+      <section id="empower" className="py-24 bg-gradient-to-b from-indigo-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0 }}

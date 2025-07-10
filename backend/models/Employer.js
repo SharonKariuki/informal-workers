@@ -21,7 +21,6 @@ const criminalRecordSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// Main Employer Schema
 const employerSchema = new mongoose.Schema(
   {
     user: {
@@ -38,9 +37,7 @@ const employerSchema = new mongoose.Schema(
     },
 
     // Personal Info
-    profileApproved: { type: Boolean, default: false },
     firstName: { type: String, required: true },
-    
     lastName: { type: String, required: true },
     email: { type: String, required: true, lowercase: true },
     phone: { type: String, required: true },
@@ -52,33 +49,50 @@ const employerSchema = new mongoose.Schema(
     },
 
     address: addressSchema,
+
+    // Employer-specific business info
+    companyName: { type: String },
+    companyWebsite: { type: String },
+
+    // Criminal record
     criminalRecord: criminalRecordSchema,
 
-    // Verification Docs
+    // KYC document filenames
     idFront: { type: String, required: true },
     idBack: { type: String, required: true },
     selfie: { type: String, required: true },
+    cv: { type: String },  // optional in case future employer profiles upload docs
 
-    // Admin Approval
-    // profileApproved: { type: Boolean, default: false },
-    // status: {
-    //   type: String,
-    //   enum: ['pending', 'approved', 'rejected'],
-    //   default: 'pending',
-    // },
+    // Path fields for KYC (future integrations)
+    selfiePath: { type: String },
+    idDocPath: { type: String },
 
-    // Ratings and Reviews
-    averageRating: { type: Number, default: 5 },
+    kycResult: { type: Object },
+
+    kycStatus: {
+      type: String,
+      enum: ['pending', 'pendingApproval', 'verified', 'rejected'],
+      default: 'pending',
+    },
+
+    // Approval and Admin status
+    profileApproved: { type: Boolean, default: false },
+    isApprovedToWork: { type: Boolean, default: false }, // match Worker model logic
+
+    // Ratings & Reviews
+    averageRating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
 
-    // Optional Business Info
-    companyName: { type: String },
-    companyWebsite: { type: String },
-    profilePhoto: { type: String },
-
-    // User Consent
+    // User consent fields
     confirmInfo: { type: Boolean, required: true },
     consent: { type: Boolean, required: true },
+
+    submittedAt: {
+      type: Date,
+    },
+
+    // Employer profile photo
+    profilePhoto: { type: String },
   },
   {
     timestamps: true,

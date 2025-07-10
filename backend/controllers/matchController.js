@@ -1,71 +1,49 @@
-import Worker from "../models/workerModel.js";
-import Job from "../models/jobModel.js";
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
+const Worker = require('../models/Worker');
+const Job = require('../models/jobModels');
 
-export const matchJobs = async (req, res) => {
-  const workerId = req.params.id;
+// @desc    Match jobs based on worker's skills and optional location
+// @route   GET /api/match/:workerId
+// @access  Public
+exports.matchJobs = async (req, res) => {
+  const { workerId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(workerId)) {
-    return res.status(400).json({ error: "Invalid worker ID" });
+    return res.status(400).json({ success: false, message: 'Invalid worker ID' });
   }
 
   try {
     const worker = await Worker.findById(workerId);
-
     if (!worker) {
-      return res.status(404).json({ message: "Worker not found" });
+      return res.status(404).json({ success: false, message: 'Worker not found' });
     }
 
-    // Prepare search criteria
-    const orCriteria = [];
-
-    // Match occupation in job title
-    if (worker.occupation) {
-      orCriteria.push({ title: new RegExp(worker.occupation, "i") });
+    const { skills = [], address } = worker;
+    if (!skills.length) {
+      return res.status(400).json({ success: false, message: 'Worker has no skills for matching' });
     }
 
-    // Match skills in job requirements
-    if (worker.skills && worker.skills.length > 0) {
-      const skillsRegex = new RegExp(worker.skills.join("|"), "i");
-      orCriteria.push({ requirements: { $regex: skillsRegex } });
+    const query = {
+      skills: { $in: skills },
+      status: 'Active'
+    };
+
+    if (address?.city) {
+      query.location = { $regex: address.city, $options: 'i' };
     }
 
-    // Match city name
-    if (worker.address?.city) {
-      orCriteria.push({ "location.city": new RegExp(worker.address.city, "i") });
-    }
+    console.log('🔍 Match query:', query);
 
-    // Build base query
-    let query = {};
+    const jobs = await Job.find(query).sort({ postedAt: -1 });
 
-    if (orCriteria.length > 0) {
-      query.$or = orCriteria;
-    }
+    res.status(200).json({
+      success: true,
+      count: jobs.length,
+      data: jobs
+    });
 
-    // Add geospatial proximity if available
-    if (worker.location?.coordinates) {
-      query.$and = query.$and || [];
-      query.$and.push({
-        location: {
-          $near: {
-            $geometry: worker.location,
-            $maxDistance: 20000, // 20 km
-          },
-        },
-      });
-    }
-
-    // If no criteria, fetch all jobs
-    if (Object.keys(query).length === 0) {
-      query = {}; // match all jobs
-    }
-
-    const matchedJobs = await Job.find(query);
-
-    res.status(200).json(matchedJobs);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
+    console.error('❌ Match error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
-

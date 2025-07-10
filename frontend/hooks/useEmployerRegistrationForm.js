@@ -48,7 +48,7 @@ export const useRegistrationForm = (initialState) => {
     // ID Verification
     if (!formData.idFront) newErrors.idFront = 'Front ID is required';
     if (!formData.idBack) newErrors.idBack = 'Back ID is required';
-    if (!formData.selfie) newErrors.selfie = 'Selfie with ID is required';
+    if (!formData.selfiePath) newErrors.selfiePath = 'Selfie with ID is required';
 
     // Background check
     if (formData.hasCriminalRecord === 'yes') {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaGoogle, FaRegEnvelope } from 'react-icons/fa';
+import { FaRegEnvelope } from 'react-icons/fa';
 import { MdLockOutline } from 'react-icons/md';
 import AuthLayout from '@/components/AuthLayout';
 
@@ -32,12 +32,12 @@ export default function SignInPage() {
         alert('Login successful!');
 
         if (data.user.role === 'employer') {
-        router.push('/employers/dashboard');
-      } else if (data.user.role === 'worker') {
-        router.push('/workers/dashboard');
-      } else {
-        router.push('/dashboard');
-      }
+          router.push('/employers/dashboard');
+        } else if (data.user.role === 'worker') {
+          router.push('/workers/dashboard');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
         alert(data.msg || 'Login failed');
       }
@@ -49,28 +49,10 @@ export default function SignInPage() {
 
   const form = (
     <form onSubmit={handleSubmit}>
-      {/* Google Sign-in (placeholder, not functional) */}
-      <button
-        type="button"
-        className="w-full flex items-center justify-center space-x-3 py-3.5 px-6 border border-blue-200 rounded-xl hover:border-blue-300 bg-white shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 mb-8"
-      >
-        <FaGoogle className="text-[#EA4335] text-xl" />
-        <span className="text-sm font-medium text-gray-700">Continue with Google</span>
-      </button>
-
-      <div className="relative mb-8">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-blue-100"></div>
-        </div>
-        <div className="relative flex justify-center">
-          <span className="px-3 bg-white text-sm text-blue-500 font-medium">or sign in with email</span>
-        </div>
-      </div>
-
       <div className="space-y-5">
         {/* Email Input */}
         <div className="relative group">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 left-0 pl-95 flex items-center pointer-events-none">
             <FaRegEnvelope className="h-5 w-5 text-blue-400" />
           </div>
           <input
@@ -86,7 +68,7 @@ export default function SignInPage() {
 
         {/* Password Input */}
         <div className="relative group">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="absolute inset-y-0 left-0 pl-95 flex items-center pointer-events-none">
             <MdLockOutline className="h-5 w-5 text-blue-400" />
           </div>
           <input
@@ -143,3 +125,4 @@ export default function SignInPage() {
 
   return <AuthLayout title="Welcome Back" form={form} aside={aside} />;
 }
+

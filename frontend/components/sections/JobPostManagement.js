@@ -1,4 +1,5 @@
-// components/sections/JobPostManagement.js
+"use client";
+
 import { FaToggleOn, FaToggleOff, FaSearch, FaFilter } from "react-icons/fa";
 import { useState } from "react";
 
@@ -15,27 +16,36 @@ export default function JobPostManagement({ jobs, refresh, loading }) {
         body: JSON.stringify({ status: newStatus }),
       });
 
-      if (!response.ok) throw new Error('Failed to update job status');
-      
+      if (!response.ok) throw new Error("Failed to update job status");
+
       refresh();
     } catch (error) {
       console.error("Error updating job status:", error);
     }
   };
 
-  const filteredJobs = Array.isArray(jobs) ? jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(search.toLowerCase()) || 
-                         job.description.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || job.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }) : [];
+  const filteredJobs = Array.isArray(jobs)
+    ? jobs.filter((job) => {
+        const title = job.title || "";
+        const description = job.description || "";
+        const matchesSearch =
+          title.toLowerCase().includes(search.toLowerCase()) ||
+          description.toLowerCase().includes(search.toLowerCase());
+        const matchesStatus =
+          statusFilter === "all" || job.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+      })
+    : [];
 
   return (
     <section className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-          <h2 className="text-2xl font-bold text-indigo-900">Job Post Management</h2>
-          
+          <h2 className="text-2xl font-bold text-indigo-900">
+            Job Post Management
+          </h2>
+
           <div className="flex flex-wrap items-center gap-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -49,7 +59,7 @@ export default function JobPostManagement({ jobs, refresh, loading }) {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            
+
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <FaFilter className="text-gray-400" />
@@ -77,19 +87,19 @@ export default function JobPostManagement({ jobs, refresh, loading }) {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-indigo-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
                     Title
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
                     Employer
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
                     Category
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
                     Status
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-800 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -99,14 +109,20 @@ export default function JobPostManagement({ jobs, refresh, loading }) {
                   filteredJobs.map((job) => (
                     <tr key={job._id} className="hover:bg-indigo-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{job.title}</div>
-                        <div className="text-sm text-gray-500 line-clamp-1">{job.description}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {job.title}
+                        </div>
+                        <div className="text-sm text-gray-500 line-clamp-1">
+                          {job.description}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {job.employer?.firstName} {job.employer?.lastName}
                         </div>
-                        <div className="text-sm text-gray-500">{job.employer?.email}</div>
+                        <div className="text-sm text-gray-500">
+                          {job.employer?.email}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
@@ -114,13 +130,15 @@ export default function JobPostManagement({ jobs, refresh, loading }) {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          job.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : job.status === 'inactive' 
-                              ? 'bg-red-100 text-red-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            job.status === "active"
+                              ? "bg-green-100 text-green-800"
+                              : job.status === "inactive"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
                           {job.status}
                         </span>
                       </td>
@@ -128,12 +146,12 @@ export default function JobPostManagement({ jobs, refresh, loading }) {
                         <button
                           onClick={() => toggleStatus(job._id, job.status)}
                           className={`flex items-center px-3 py-1 rounded-lg text-sm font-medium ${
-                            job.status === 'active'
-                              ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            job.status === "active"
+                              ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                           }`}
                         >
-                          {job.status === 'active' ? (
+                          {job.status === "active" ? (
                             <>
                               <FaToggleOn className="mr-1 text-lg" /> Active
                             </>
@@ -148,7 +166,10 @@ export default function JobPostManagement({ jobs, refresh, loading }) {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td
+                      colSpan="5"
+                      className="px-6 py-4 text-center text-sm text-gray-500"
+                    >
                       No jobs found matching your criteria
                     </td>
                   </tr>

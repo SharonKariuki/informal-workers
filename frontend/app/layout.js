@@ -2,6 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Layouts/Navbar";
 import Footer from "@/components/Layouts/Footer";
+import 'leaflet/dist/leaflet.css';
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,10 +23,17 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}  >
+      <head>
+        {/* ✅ Load Google Maps JavaScript API */}
+        {/* <Script
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+          strategy="beforeInteractive"
+        /> */}
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Navbar />
         <main className="min-h-screen bg-gray-50">
-        {children}
+          {children}
         </main>
         <Footer />
       </body>
